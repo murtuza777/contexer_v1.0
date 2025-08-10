@@ -1,0 +1,248 @@
+{
+  "header": {
+    "pricing": "Pricing",
+    "aboutUs": "About Us",
+    "webVersion": "Web Version",
+    "account": "Account",
+    "logout": "Logout",
+    "login": "Login"
+  },
+  "hero": {
+    "language":"en",
+    "title": "Generate any code or design with one click",
+    "slogan": "Use AI to create applications, including Vue, React, Next.js, Python, Java and WeChat Mini Programs.",
+    "download": {
+      "macIntel": "Download for Mac (Intel)",
+      "macArm": "Download for Mac (Apple Silicon)",
+      "windows": "Download for Windows"
+    }
+  },
+  "inputSection": {
+    "title": "Start with a simple prompt",
+    "placeholder": "Start using Contexer to create a program",
+    "button": "Generate",
+    "importImage": "Import Image",
+    "sketchFile": "Sketch or Figma File",
+    "generateDesign": "Generate Design",
+    "send": "Send",
+    "maxImagesAlert": "You can only upload up to 5 images",
+    "uploadSuccess": "Upload successful:",
+    "uploadFailed": "Upload failed:",
+    "uploadError": "Upload error:",
+    "inputRequired": "Please enter text or upload an image",
+    "uploadedImage": "Uploaded image",
+    "removeImage": "Remove image",
+    "dropImageHere": "Drop image here",
+    "uploading": "Uploading..."
+  },
+  "projectsSection": {
+    "title": "Project Showcase",
+    "subtitle": "See what others have built with Contexer",
+    "viewMore": "View More",
+    "saas": {
+      "description": "Backend Visualization Page"
+    },
+    "business": {
+      "description": "Backend Homepage"
+    },
+    "corporate": {
+      "description": "PC Login Page"
+    },
+    "product": {
+      "description": "Mobile Login Page"
+    }
+  },
+  "pricingPlans": {
+    "paymentSuccess": "Payment Success!",
+    "upgradePlan": "Upgrade Plan",
+    "title": "Choose the plan that suits you",
+    "subtitle": "We provide flexible pricing options for different development needs",
+    "loginRequired": "Please login first",
+    "currentPlan": "Current Plan",
+    "downgradeToFree": "Downgrade to Free",
+    "upgradeToPro": "Upgrade to Pro",
+    "upgradeToProMax": "Upgrade to Pro Max",
+    "upgradeToEnterprise": "Upgrade to Enterprise",
+    "getStarted": "Get Started",
+    "free": {
+      "name": "Free",
+      "price": "Free",
+      "description": "Suitable for individual developers and small projects",
+      "features": [
+        "AI code generation",
+        "Basic project templates",
+        "Community support",
+        "Basic development tools",
+        "15 requests per month"
+      ],
+      "button": "Get Started"
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "$10",
+      "period": "/month",
+      "description": "Suitable for advanced developers and teams",
+      "features": [
+        "All Free features",
+        "Priority AI responses",
+        "Backend API generation",
+        "Sketch design to code",
+        "200 requests per month"
+      ],
+      "button": "Get Started",
+      "popular": "Most Popular"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "price": "$30",
+      "period": "/month",
+      "description": "Suitable for professional development needs",
+      "features": [
+        "All Pro features",
+        "500 requests per month",
+        "Dedicated customer support",
+        "Custom model training",
+        "Advanced API integration"
+      ],
+      "button": "Get Started"
+    }
+  },
+  "accountSettings": {
+    "title": "Settings",
+    "subtitle": "You can manage your account and billing here",
+    "upgradeToPro": "Upgrade to Pro",
+    "upgradeToProMax": "Upgrade to Pro Max",
+    "getMoreToken": "Get More Tokens",
+    "profile": {
+      "title": "Basic Information",
+      "username": "Username",
+      "email": "Email",
+      "setEmail": "Click here to set your email"
+    },
+    "emailSettings": {
+      "title": "Set Email",
+      "description": "After setting up your email address, you can use paid services",
+      "placeholder": "Please enter email address",
+      "button": "Set Email",
+      "success": "Email set successfully",
+      "error": "Failed to set email"
+    },
+    "billingHistory": {
+      "title": "Billing History",
+      "date": "Date",
+      "description": "Description",
+      "amount": "Amount",
+      "status": "Status",
+      "noRecords": "No billing records",
+      "succeeded": "Succeeded",
+      "pending": "Pending",
+      "failed": "Failed"
+    },
+    "subscription": {
+      "title": "Current Subscription",
+      "plan": "Plan",
+      "status": "Status",
+      "nextBilling": "Next Billing",
+      "cancel": "Cancel Subscription",
+      "resume": "Resume Subscription",
+      "change": "Change Plan",
+      "active": "Active",
+      "cancelled": "Cancelled",
+      "pastDue": "Past Due"
+    },
+    "usage": {
+      "title": "Usage",
+      "current": "Current Usage",
+      "limit": "Limit",
+      "resetDate": "Reset Date",
+      "unlimited": "Unlimited"
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "deleteAccount": "Delete Account",
+      "deleteDescription": "Permanently delete your account and all associated data",
+      "deleteWarning": "This action cannot be undone",
+      "confirmDelete": "Type 'DELETE' to confirm"
+    }
+  },
+  "footer": {
+    "company": "Company",
+    "product": "Product",
+    "resources": "Resources",
+    "legal": "Legal",
+    "aboutUs": "About Us",
+    "careers": "Careers",
+    "contact": "Contact",
+    "features": "Features",
+    "pricing": "Pricing",
+    "changelog": "Changelog",
+    "documentation": "Documentation",
+    "blog": "Blog",
+    "community": "Community",
+    "support": "Support",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy",
+    "allRightsReserved": "All rights reserved",
+    "builtWith": "Built with"
+  },
+  "capabilities": {
+    "title": "Contexer's Code Generation Capabilities",
+    "subtitle": "Powerful AI-driven development tools",
+    "codeGeneration": {
+      "title": "Intelligent Code Generation",
+      "description": "Generate complete applications from simple descriptions"
+    },
+    "designToCode": {
+      "title": "Design to Code",
+      "description": "Convert design files to production-ready code"
+    },
+    "multiFramework": {
+      "title": "Multi-Framework Support",
+      "description": "Support for React, Vue, Next.js, Python, Java and more"
+    },
+    "realTimePreview": {
+      "title": "Real-time Preview",
+      "description": "See your changes instantly with live preview"
+    },
+    "collaboration": {
+      "title": "Team Collaboration",
+      "description": "Work together with your team in real-time"
+    },
+    "deployment": {
+      "title": "One-Click Deployment",
+      "description": "Deploy your applications with a single click"
+    }
+  },
+  "testimonials": {
+    "title": "What Our Users Say",
+    "subtitle": "Join thousands of developers who trust Contexer",
+    "testimonial1": {
+      "quote": "Contexer has revolutionized how I build applications. The AI-generated code is incredibly accurate.",
+      "author": "Sarah Chen",
+      "role": "Full-Stack Developer"
+    },
+    "testimonial2": {
+      "quote": "The design-to-code feature is a game changer. It saves me hours of development time.",
+      "author": "Mike Johnson",
+      "role": "Frontend Developer"
+    },
+    "testimonial3": {
+      "quote": "I can prototype ideas faster than ever before. Contexer is an essential tool for any developer.",
+      "author": "Alex Rodriguez",
+      "role": "Product Manager"
+    }
+  },
+  "cta": {
+    "title": "Ready to accelerate your development?",
+    "subtitle": "Join thousands of developers using Contexer to build amazing applications",
+    "button": "Get Started for Free",
+    "noCard": "No credit card required"
+  },
+  "errors": {
+    "pageNotFound": "Page Not Found",
+    "serverError": "Server Error",
+    "goHome": "Go Home",
+    "tryAgain": "Try Again"
+  }
+}
