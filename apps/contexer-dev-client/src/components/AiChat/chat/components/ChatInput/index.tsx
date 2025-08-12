@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from "react";
-import { FileIcon, MessageSquare, Code2 } from "lucide-react";
+import { FileIcon, MessageSquare, Code2, Bot } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { uploadImage } from "@/api/chat";
 import classNames from "classnames";
@@ -69,6 +69,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
   >([]);
   const { mode: chatMode, setMode } = useChatModeStore();
   const { isDarkMode } = useThemeStore();
+  const [isViberMode, setIsViberMode] = useState(false);
 
   const getFileOptions = () => {
     return Object.entries(files).map(([path]) => ({
@@ -414,11 +415,15 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
                 value={input}
                 onChange={onInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder={t(
-                  chatMode === ChatMode.Chat
-                    ? t(modePlaceholders[ChatMode.Chat])
-                    : t(modePlaceholders[ChatMode.Builder])
-                )}
+                placeholder={
+                  isViberMode 
+                    ? "Viber Agent Active - Describe what you want to build or fix..." 
+                    : t(
+                        chatMode === ChatMode.Chat
+                          ? t(modePlaceholders[ChatMode.Chat])
+                          : t(modePlaceholders[ChatMode.Builder])
+                      )
+                }
                 className={classNames(
                   "w-full p-4 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none resize-none text-sm",
                   "placeholder-gray-500 dark:placeholder-gray-400",
@@ -541,6 +546,27 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
                   )}
                   <span className="absolute px-2 py-1 mb-2 text-xs text-gray-200 transition-opacity -translate-x-1/2 bg-gray-800 rounded opacity-0 bottom-full left-1/2 group-hover:opacity-100 whitespace-nowrap">
                     {chatMode}
+                  </span>
+                </button>
+
+                <button
+                  className={classNames(
+                    "p-2 rounded-md transition-colors",
+                    "hover:bg-gray-700/30",
+                    "group relative",
+                    isViberMode && "bg-purple-500/20 text-purple-400"
+                  )}
+                  onClick={() => setIsViberMode(!isViberMode)}
+                  title="Toggle Viber Agent (Autonomous Builder)"
+                >
+                  <Bot 
+                    className={classNames(
+                      "w-4 h-4", 
+                      isViberMode ? "text-purple-400" : "text-blue-400"
+                    )} 
+                  />
+                  <span className="absolute px-2 py-1 mb-2 text-xs text-gray-200 transition-opacity -translate-x-1/2 bg-gray-800 rounded opacity-0 bottom-full left-1/2 group-hover:opacity-100 whitespace-nowrap">
+                    {isViberMode ? "Viber: ON" : "Viber: OFF"}
                   </span>
                 </button>
               </div>

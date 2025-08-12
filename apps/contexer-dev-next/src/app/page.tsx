@@ -1,8 +1,15 @@
-import React, { useState, useEffect, useRef } from "react"
-import { useAuth } from "../hooks/useAuth"
-import { Button } from "./ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
-import { Badge } from "./ui/badge"
+"use client"
+
+import type React from "react"
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react"
+import { useAuth } from "@/hooks/useAuth"
+import { Button } from "@/components/ui/button"
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   Code2,
   Play,
@@ -80,52 +87,7 @@ const SkeletonStep = () => (
   </div>
 )
 
-// Loading Button Component
-const LoadingButton = ({
-  children,
-  isLoading = false,
-  onClick,
-  className = "",
-  variant = "default",
-  size = "default",
-  type,
-  disabled,
-  ...props
-}: any) => {
-  const [internalLoading, setInternalLoading] = useState(false)
 
-  const handleClick = async () => {
-    if (onClick && !disabled && !isLoading) {
-      setInternalLoading(true)
-      await new Promise((resolve) => setTimeout(resolve, 150))
-      onClick()
-      setInternalLoading(false)
-    }
-  }
-
-  const loading = isLoading || internalLoading
-
-  return (
-    <Button
-      onClick={handleClick}
-      disabled={loading || disabled}
-      className={`transition-all duration-300 hover:scale-105 active:scale-95 ${className}`}
-      variant={variant}
-      size={size}
-      type={type}
-      {...props}
-    >
-      {loading ? (
-        <div className="flex items-center">
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          <span>Loading...</span>
-        </div>
-      ) : (
-        children
-      )}
-    </Button>
-  )
-}
 
 // Animated Counter Component
 const AnimatedCounter = ({
@@ -135,31 +97,11 @@ const AnimatedCounter = ({
 }: { end: number; duration?: number; suffix?: string }) => {
   const [count, setCount] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    setIsMounted(true)
+    setIsVisible(true)
   }, [])
-
-  useEffect(() => {
-    if (!isMounted) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !isVisible) {
-          setIsVisible(true)
-        }
-      },
-      { threshold: 0.1 },
-    )
-
-    if (ref.current) {
-      observer.observe(ref.current)
-    }
-
-    return () => observer.disconnect()
-  }, [isVisible, isMounted])
 
   useEffect(() => {
     if (!isVisible) return
@@ -217,18 +159,13 @@ const FloatingActionButton = ({
   )
 }
 
-interface LandingPageProps {
-  onGuestAccess: () => void;
-}
-
-export default function LandingPage({ onGuestAccess }: LandingPageProps) {
+function LandingPage() {
+  const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [scrollY, setScrollY] = useState(0)
-  const [currentView, setCurrentView] = useState<"landing" | "login" | "signup">("landing")
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const { signInAsGuest } = useAuth()
+  const { user, loading } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
-  const [isGuestLoading, setIsGuestLoading] = useState(false)
   const [sectionsLoading, setSectionsLoading] = useState({
     hero: true,
     howItWorks: true,
@@ -299,30 +236,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
         observerRef.current.observe(el)
       }
     })
-  }, [currentView, isMounted])
-
-  const handleGuestSignIn = async () => {
-    setIsGuestLoading(true)
-    
-    const { data, error } = await signInAsGuest()
-    
-    if (error) {
-      console.error("Guest login failed:", error)
-    } else {
-      console.log("Guest login successful:", data)
-      onGuestAccess() // Call the callback to go to main app
-    }
-    
-    setIsGuestLoading(false)
-  }
-
-  if (currentView === "login") {
-    return <LoginPage onBack={() => setCurrentView("landing")} onSignup={() => setCurrentView("signup")} onGuestAccess={handleGuestSignIn} isGuestLoading={isGuestLoading} />
-  }
-
-  if (currentView === "signup") {
-    return <SignupPage onBack={() => setCurrentView("landing")} onLogin={() => setCurrentView("login")} onGuestAccess={handleGuestSignIn} isGuestLoading={isGuestLoading} />
-  }
+  }, [isMounted])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black relative overflow-hidden">
@@ -374,8 +288,8 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
-              {["How It Works", "Features", "Pricing"].map((item, index) => (
-                <a
+              {["How It Works", "Pricing"].map((item, index) => (
+                <Link
                   key={item}
                   href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
                   className="text-white font-medium hover:text-blue-300 transition-all duration-300 hover:scale-105 active:scale-95 relative group py-2 drop-shadow-sm"
@@ -384,22 +298,23 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                   {item}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-white group-hover:w-full transition-all duration-500" />
                   <span className="absolute inset-0 bg-blue-400/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
-                </a>
+                </Link>
               ))}
-              <LoadingButton
-                onClick={() => setCurrentView("login")}
-                className="text-white font-medium hover:text-blue-300 px-4 py-2 rounded-lg hover:bg-white/10 drop-shadow-sm bg-transparent border-0 shadow-none"
-                variant="outline"
-              >
-                Login
-              </LoadingButton>
-              <LoadingButton
-                onClick={() => setCurrentView("signup")}
-                className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold border-0 shadow-lg hover:shadow-blue-500/25 relative overflow-hidden group"
-              >
-                <span className="relative z-10">Start Building</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </LoadingButton>
+              <Link href="/login">
+                <Button
+                  variant="outline"
+                  className="bg-transparent text-white border-white/50 hover:bg-white/10"
+                >
+                  Login
+                </Button>
+              </Link>
+                            <Link href="/signup">
+                <Button
+                  className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white shadow-xl hover:shadow-blue-500/25"
+                >
+                  Get Started
+                </Button>
+              </Link>
             </div>
 
             <button
@@ -429,8 +344,8 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
           } overflow-hidden bg-gradient-to-b from-slate-950/95 to-blue-950/95 backdrop-blur-xl`}
         >
           <div className="px-4 py-6 space-y-4">
-            {["How It Works", "Features", "Pricing"].map((item, index) => (
-              <a
+            {["How It Works", "Pricing"].map((item, index) => (
+              <Link
                 key={item}
                 href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
                 className="block text-white font-medium hover:text-blue-300 transition-all duration-300 py-2 px-4 rounded-lg hover:bg-white/10 transform hover:translate-x-2 active:scale-95"
@@ -438,27 +353,25 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item}
-              </a>
+              </Link>
             ))}
-            <LoadingButton
-              onClick={() => {
-                setCurrentView("login")
-                setIsMenuOpen(false)
-              }}
-              className="block w-full text-left text-white font-medium hover:text-blue-300 py-2 px-4 rounded-lg hover:bg-white/10 bg-transparent border-0 shadow-none"
-              variant="outline"
-            >
-              Login
-            </LoadingButton>
-            <LoadingButton
-              onClick={() => {
-                setCurrentView("signup")
-                setIsMenuOpen(false)
-              }}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 transition-all duration-300 font-semibold"
-            >
-              Start Building
-            </LoadingButton>
+                                    <Link href="/login" className="block w-full">
+              <Button
+                onClick={() => setIsMenuOpen(false)}
+                className="w-full text-left justify-start text-white font-medium hover:text-blue-300 py-2 px-4 rounded-lg hover:bg-white/10 bg-transparent border-0 shadow-none"
+                variant="outline"
+              >
+                Login
+              </Button>
+            </Link>
+                        <Link href="/signup" className="block w-full">
+              <Button
+                onClick={() => setIsMenuOpen(false)}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 transition-all duration-300 font-semibold"
+              >
+                Start Building
+              </Button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -528,38 +441,23 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                   isVisible.hero ? "animate-fade-in-up opacity-100" : "opacity-0 translate-y-10"
                 } flex flex-col sm:flex-row gap-4 justify-center items-center`}
               >
-                <LoadingButton
-                  size="lg"
-                  onClick={() => setCurrentView("signup")}
-                  className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold text-lg px-8 py-4 shadow-xl hover:shadow-blue-500/25 group relative overflow-hidden"
-                >
-                  <span className="relative z-10 flex items-center">
-                    Start Building
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-2 transition-transform duration-300" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </LoadingButton>
-                
-                <LoadingButton
-                  variant="outline"
-                  size="lg"
-                  onClick={handleGuestSignIn}
-                  isLoading={isGuestLoading}
-                  className="text-lg px-8 py-4 bg-gradient-to-r from-purple-600/80 to-indigo-600/80 border-white/30 text-white font-semibold hover:from-purple-700/90 hover:to-indigo-700/90 backdrop-blur-sm group relative overflow-hidden shadow-lg"
-                >
-                  {isGuestLoading ? (
-                    <div className="flex items-center">
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      <span>Accessing...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <Users className="mr-2 h-5 w-5 group-hover:scale-125 transition-transform duration-300" />
-                      <span className="relative z-10">Continue as Guest</span>
-                    </>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </LoadingButton>
+                <Link href="/signup">
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold text-lg px-8 py-6 rounded-xl shadow-2xl hover:shadow-blue-500/30 transform hover:-translate-y-1 transition-all duration-300"
+                  >
+                    Start Building for Free
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto bg-transparent text-white border-white/50 hover:bg-white/10 text-lg px-8 py-6 rounded-xl transition-all duration-300"
+                  >
+                    Continue as Guest
+                  </Button>
+                </Link>
               </div>
 
               {/* Scroll Indicator */}
@@ -695,7 +593,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                 ].map((feature, index) => (
                   <Card
                     key={index}
-                    className={`bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 hover:border-blue-500/40 transition-all duration-500 hover:scale-105 hover:-translate-y-2 active:scale-95 hover:shadow-2xl hover:shadow-blue-500/20 group relative overflow-hidden shadow-lg cursor-pointer ${
+                    className={`bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 hover:border-blue-500/40 transition-all duration-500 hover:scale-105 hover:-translate-y-2 active:scale-95 group relative overflow-hidden shadow-lg cursor-pointer ${
                       isVisible.features ? "animate-fade-in-up opacity-100" : "opacity-0 translate-y-10"
                     }`}
                     style={{ animationDelay: `${index * 150}ms` }}
@@ -707,7 +605,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                       >
                         <div className="text-white">{feature.icon}</div>
                       </div>
-                      <CardTitle className="text-lg text-black font-bold group-hover:text-blue-700 transition-colors duration-300">
+                      <CardTitle className="text-lg text-white font-bold group-hover:text-blue-200 transition-colors duration-300 drop-shadow-sm">
                         {feature.title}
                       </CardTitle>
                       <Badge
@@ -718,7 +616,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                       </Badge>
                     </CardHeader>
                     <CardContent className="relative z-10">
-                      <CardDescription className="text-center text-slate-700 font-medium group-hover:text-slate-800 transition-colors duration-300 leading-relaxed">
+                      <CardDescription className="text-center text-white font-medium group-hover:text-blue-100 transition-colors duration-300 leading-relaxed drop-shadow-sm">
                         {feature.description}
                       </CardDescription>
                     </CardContent>
@@ -749,18 +647,18 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
             ) : (
               <>
                 <Card
-                  className={`bg-white/95 backdrop-blur-xl border-white/60 hover:border-blue-200 transition-all duration-500 hover:scale-105 hover:-translate-y-2 active:scale-95 group relative overflow-hidden shadow-xl cursor-pointer ${
+                  className={`bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 hover:border-white/30 transition-all duration-500 hover:scale-105 hover:-translate-y-2 active:scale-95 relative group overflow-hidden shadow-xl cursor-pointer ${
                     isVisible.pricing ? "animate-fade-in-up opacity-100" : "opacity-0 translate-y-10"
                   }`}
                   style={{ animationDelay: "200ms" }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <CardHeader className="text-center pb-8 relative z-10">
-                    <CardTitle className="text-2xl mb-2 text-black font-bold group-hover:text-blue-700 transition-colors duration-300">
+                    <CardTitle className="text-2xl mb-2 text-white font-bold group-hover:text-blue-200 transition-colors duration-300 drop-shadow-sm">
                       Free
                     </CardTitle>
-                    <div className="text-5xl font-bold mb-2 text-black">$0</div>
-                    <CardDescription className="text-slate-700 font-medium">
+                    <div className="text-5xl font-bold mb-2 text-white drop-shadow-lg">$0</div>
+                    <CardDescription className="text-white font-medium drop-shadow-sm">
                       Perfect for trying out Contexer
                     </CardDescription>
                   </CardHeader>
@@ -778,19 +676,20 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                         <div className="bg-green-500/30 p-1 rounded-full mr-3 group-hover/item:scale-110 transition-transform duration-300 shadow-sm">
                           <Check className="h-3 w-3 text-green-300" />
                         </div>
-                        <span className="text-slate-800 font-medium group-hover/item:text-blue-800 transition-colors duration-300">
+                        <span className="text-white font-medium group-hover/item:text-blue-100 transition-colors duration-300 drop-shadow-sm">
                           {item.feature}
                         </span>
                       </div>
                     ))}
-                    <LoadingButton
-                      onClick={() => setCurrentView("signup")}
-                      className="w-full mt-8 bg-white text-blue-700 font-semibold border-blue-200 hover:bg-blue-50 hover:border-blue-300 group/btn relative overflow-hidden shadow-lg"
-                      variant="outline"
-                    >
-                      <span className="relative z-10">Get Started Free</span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-                    </LoadingButton>
+                                        <Link href="/signup">
+                      <Button
+                        className="w-full mt-8 bg-transparent border-white/30 text-white font-semibold hover:bg-white/10 hover:border-white/40 group/btn relative overflow-hidden shadow-lg"
+                        variant="outline"
+                      >
+                        <span className="relative z-10">Get Started Free</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
 
@@ -806,11 +705,11 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                     Most Popular
                   </Badge>
                   <CardHeader className="text-center pb-8 relative z-10">
-                    <CardTitle className="text-2xl mb-2 text-black font-bold group-hover:text-blue-700 transition-colors duration-300">
+                    <CardTitle className="text-2xl mb-2 text-white font-bold group-hover:text-blue-200 transition-colors duration-300 drop-shadow-sm">
                       Pro
                     </CardTitle>
-                    <div className="text-5xl font-bold mb-2 text-black">$29</div>
-                    <CardDescription className="text-slate-700 font-medium">
+                    <div className="text-5xl font-bold mb-2 text-white drop-shadow-lg">$29</div>
+                    <CardDescription className="text-white font-medium drop-shadow-sm">
                       For serious builders and teams
                     </CardDescription>
                   </CardHeader>
@@ -829,18 +728,19 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                         <div className="bg-green-500/30 p-1 rounded-full mr-3 group-hover/item:scale-110 transition-transform duration-300 shadow-sm">
                           <Check className="h-3 w-3 text-green-300" />
                         </div>
-                        <span className="text-slate-800 font-medium group-hover/item:text-blue-800 transition-colors duration-300">
+                        <span className="text-white font-medium group-hover/item:text-blue-100 transition-colors duration-300 drop-shadow-sm">
                           {item.feature}
                         </span>
                       </div>
                     ))}
-                    <LoadingButton
-                      onClick={() => setCurrentView("signup")}
-                      className="w-full mt-8 bg-blue-700 hover:bg-blue-800 text-white font-semibold border-0 shadow-xl hover:shadow-blue-500/25 group/btn relative overflow-hidden"
-                    >
-                      <span className="relative z-10">Start Pro Trial</span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-                    </LoadingButton>
+                                        <Link href="/signup">
+                      <Button
+                        className="w-full mt-8 bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold border-0 shadow-xl hover:shadow-blue-500/25 group/btn relative overflow-hidden"
+                      >
+                        <span className="relative z-10">Start Pro Trial</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
               </>
@@ -869,13 +769,10 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
               <ul className="space-y-3 text-white">
                 {["Terms of Service", "Privacy Policy"].map((item, index) => (
                   <li key={item}>
-                    <a
-                      href="#"
-                      className="font-medium hover:text-blue-300 transition-all duration-300 hover:translate-x-2 hover:scale-105 active:scale-95 inline-block relative group drop-shadow-sm"
-                    >
+                    <Link href="#" className="font-medium hover:text-blue-300 transition-all duration-300 hover:translate-x-2 hover:scale-105 active:scale-95 inline-block relative group drop-shadow-sm">
                       {item}
                       <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300" />
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -888,13 +785,13 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                   { icon: <Github className="h-6 w-6" />, href: "#", color: "hover:text-gray-300" },
                   { icon: <Linkedin className="h-6 w-6" />, href: "#", color: "hover:text-blue-500" },
                 ].map((social, index) => (
-                  <a
+                  <Link
                     key={index}
                     href={social.href}
                     className={`text-white ${social.color} transition-all duration-300 hover:scale-125 hover:-translate-y-1 active:scale-95 p-2 rounded-lg hover:bg-white/10 shadow-lg`}
                   >
                     {social.icon}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -906,432 +803,11 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
       </footer>
 
       {/* Floating Action Button */}
-      <FloatingActionButton onClick={() => setCurrentView("signup")}>
+      <FloatingActionButton onClick={() => router.push('/signup')}>
         <Rocket className="h-6 w-6" />
       </FloatingActionButton>
     </div>
   )
 }
 
-// Enhanced Login Component with Guest Access
-function LoginPage({ onBack, onSignup, onGuestAccess, isGuestLoading }: { 
-  onBack: () => void; 
-  onSignup: () => void;
-  onGuestAccess: () => void;
-  isGuestLoading: boolean;
-}) {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const { signIn } = useAuth()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
-    
-    const { data, error } = await signIn(email, password)
-    
-    if (error) {
-      setError(typeof error === 'string' ? error : (error as any)?.message || 'An error occurred during login')
-    } else {
-      console.log("Login successful:", data)
-      onBack()
-    }
-    
-    setIsLoading(false)
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Enhanced Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:50px_50px] animate-grid-move" />
-
-      <Card className="w-full max-w-md bg-gradient-to-br from-white/15 to-white/10 backdrop-blur-xl border-white/20 animate-fade-in-up shadow-2xl shadow-blue-500/10 relative overflow-hidden hover:scale-105 transition-transform duration-300">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
-        <CardHeader className="text-center relative z-10">
-          <div className="flex items-center justify-center mb-6 group">
-            <div className="relative">
-              <Code2 className="h-10 w-10 text-blue-400 group-hover:rotate-12 transition-transform duration-300" />
-              <div className="absolute inset-0 bg-blue-400 rounded-full blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-            </div>
-            <span className="ml-3 text-2xl font-bold text-white drop-shadow-lg">Contexer</span>
-          </div>
-          <CardTitle className="text-3xl text-white font-bold mb-2 drop-shadow-md">Welcome Back</CardTitle>
-          <CardDescription className="text-white font-medium text-lg drop-shadow-sm">
-            Sign in to continue building
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="relative z-10">
-          {error && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-200 text-sm">
-              {error}
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-semibold text-white drop-shadow-sm">
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/15 hover:scale-105 active:scale-95 font-medium shadow-lg"
-                placeholder="Enter your email"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-semibold text-white drop-shadow-sm">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/15 hover:scale-105 active:scale-95 font-medium shadow-lg"
-                  placeholder="Enter your password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-300 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300 font-medium"
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-            </div>
-            <LoadingButton
-              type="submit"
-              isLoading={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold border-0 shadow-xl hover:shadow-blue-500/25 py-3 text-lg relative overflow-hidden group"
-            >
-              <span className="relative z-10">Sign In</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </LoadingButton>
-          </form>
-          
-          {/* Divider */}
-          <div className="mt-6 mb-6 flex items-center">
-            <div className="flex-grow border-t border-white/20"></div>
-            <span className="flex-shrink-0 px-4 text-white/60 text-sm font-medium">or</span>
-            <div className="flex-grow border-t border-white/20"></div>
-          </div>
-
-          {/* Guest Sign In Button */}
-          <LoadingButton
-            onClick={onGuestAccess}
-            isLoading={isGuestLoading}
-            className="w-full bg-gradient-to-r from-purple-600/80 to-indigo-600/80 hover:from-purple-700/90 hover:to-indigo-700/90 text-white font-semibold border-0 shadow-xl hover:shadow-purple-500/25 py-3 text-lg relative overflow-hidden group transition-all duration-300"
-            variant="outline"
-          >
-            <span className="relative z-10 flex items-center justify-center">
-              {isGuestLoading ? (
-                <div className="flex items-center justify-center">
-                  <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                  Signing in as Guest...
-                </div>
-              ) : (
-                <>
-                  <Users className="w-5 h-5 mr-3" />
-                  Continue as Guest
-                </>
-              )}
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </LoadingButton>
-
-          <div className="mt-8 text-center space-y-4">
-            <p className="text-white font-medium drop-shadow-sm">
-              Don't have an account?{" "}
-              <button
-                onClick={onSignup}
-                className="text-blue-400 hover:text-blue-300 hover:scale-105 active:scale-95 transition-all duration-300 font-semibold hover:underline"
-              >
-                Sign up for free
-              </button>
-            </p>
-            <button
-              onClick={onBack}
-              className="text-white font-medium hover:text-blue-300 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center mx-auto group drop-shadow-sm"
-            >
-              <ArrowRight className="h-4 w-4 mr-2 rotate-180 group-hover:-translate-x-1 transition-transform duration-300" />
-              Back to home
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-// Enhanced Signup Component with Guest Access
-function SignupPage({ onBack, onLogin, onGuestAccess, isGuestLoading }: { 
-  onBack: () => void; 
-  onLogin: () => void;
-  onGuestAccess: () => void;
-  isGuestLoading: boolean;
-}) {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [passwordStrength, setPasswordStrength] = useState(0)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const { signUp } = useAuth()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
-    
-    setIsLoading(true)
-    setError(null)
-    setSuccess(null)
-    
-    const { data, error } = await signUp(formData.email, formData.password, formData.name)
-    
-    if (error) {
-      setError(typeof error === 'string' ? error : (error as any)?.message || 'An error occurred during signup')
-    } else {
-      setSuccess("Account created successfully! Please check your email for verification.")
-      console.log("Signup successful:", data)
-    }
-    
-    setIsLoading(false)
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-
-    // Calculate password strength
-    if (name === "password") {
-      let strength = 0
-      if (value.length >= 8) strength += 25
-      if (/[A-Z]/.test(value)) strength += 25
-      if (/[0-9]/.test(value)) strength += 25
-      if (/[^A-Za-z0-9]/.test(value)) strength += 25
-      setPasswordStrength(strength)
-    }
-  }
-
-  const getStrengthColor = () => {
-    if (passwordStrength < 25) return "bg-red-500"
-    if (passwordStrength < 50) return "bg-yellow-500"
-    if (passwordStrength < 75) return "bg-blue-500"
-    return "bg-green-500"
-  }
-
-  const getStrengthText = () => {
-    if (passwordStrength < 25) return "Weak"
-    if (passwordStrength < 50) return "Fair"
-    if (passwordStrength < 75) return "Good"
-    return "Strong"
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Enhanced Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:50px_50px] animate-grid-move" />
-
-      <Card className="w-full max-w-md bg-gradient-to-br from-white/15 to-white/10 backdrop-blur-xl border-white/20 animate-fade-in-up shadow-2xl shadow-blue-500/10 relative overflow-hidden hover:scale-105 transition-transform duration-300">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
-        <CardHeader className="text-center relative z-10">
-          <div className="flex items-center justify-center mb-6 group">
-            <div className="relative">
-              <Code2 className="h-10 w-10 text-blue-400 group-hover:rotate-12 transition-transform duration-300" />
-              <div className="absolute inset-0 bg-blue-400 rounded-full blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-            </div>
-            <span className="ml-3 text-2xl font-bold text-white drop-shadow-lg">Contexer</span>
-          </div>
-          <CardTitle className="text-3xl text-white font-bold mb-2 drop-shadow-md">Create Account</CardTitle>
-          <CardDescription className="text-white font-medium text-lg drop-shadow-sm">
-            Start building with AI today
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="relative z-10">
-          {error && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-200 text-sm">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-green-200 text-sm">
-              {success}
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="name" className="block text-sm font-semibold text-white drop-shadow-sm">
-                Full Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/15 hover:scale-105 active:scale-95 font-medium shadow-lg"
-                placeholder="Enter your full name"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-semibold text-white drop-shadow-sm">
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/15 hover:scale-105 active:scale-95 font-medium shadow-lg"
-                placeholder="Enter your email"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-semibold text-white drop-shadow-sm">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/15 hover:scale-105 active:scale-95 font-medium shadow-lg"
-                  placeholder="Create a password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-300 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300 font-medium"
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-              {formData.password && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white font-medium drop-shadow-sm">Password strength:</span>
-                    <span
-                      className={`font-semibold drop-shadow-sm transition-all duration-300 ${
-                        passwordStrength >= 75 ? "text-green-400" : 
-                        passwordStrength >= 50 ? "text-blue-400" : 
-                        passwordStrength >= 25 ? "text-yellow-400" : "text-red-400"
-                      }`}
-                    >
-                      {getStrengthText()}
-                    </span>
-                  </div>
-                  <div className="w-full bg-white/20 rounded-full h-2 shadow-inner">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-500 ${getStrengthColor()} shadow-sm`}
-                      style={{ width: `${passwordStrength}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-white drop-shadow-sm">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/15 hover:scale-105 active:scale-95 font-medium shadow-lg"
-                placeholder="Confirm your password"
-              />
-            </div>
-            <LoadingButton
-              type="submit"
-              isLoading={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold border-0 shadow-xl hover:shadow-blue-500/25 py-3 text-lg relative overflow-hidden group"
-            >
-              <span className="relative z-10">Create Account</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </LoadingButton>
-          </form>
-          
-          {/* Divider */}
-          <div className="mt-6 mb-6 flex items-center">
-            <div className="flex-grow border-t border-white/20"></div>
-            <span className="flex-shrink-0 px-4 text-white/60 text-sm font-medium">or</span>
-            <div className="flex-grow border-t border-white/20"></div>
-          </div>
-
-          {/* Guest Sign In Button */}
-          <LoadingButton
-            onClick={onGuestAccess}
-            isLoading={isGuestLoading}
-            className="w-full bg-gradient-to-r from-purple-600/80 to-indigo-600/80 hover:from-purple-700/90 hover:to-indigo-700/90 text-white font-semibold border-0 shadow-xl hover:shadow-purple-500/25 py-3 text-lg relative overflow-hidden group transition-all duration-300"
-            variant="outline"
-          >
-            <span className="relative z-10 flex items-center justify-center">
-              {isGuestLoading ? (
-                <div className="flex items-center justify-center">
-                  <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                  Signing in as Guest...
-                </div>
-              ) : (
-                <>
-                  <Users className="w-5 h-5 mr-3" />
-                  Continue as Guest
-                </>
-              )}
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </LoadingButton>
-
-          <div className="mt-8 text-center space-y-4">
-            <p className="text-white font-medium drop-shadow-sm">
-              Already have an account?{" "}
-              <button
-                onClick={onLogin}
-                className="text-blue-400 hover:text-blue-300 hover:scale-105 active:scale-95 transition-all duration-300 font-semibold hover:underline"
-              >
-                Sign in
-              </button>
-            </p>
-            <button
-              onClick={onBack}
-              className="text-white font-medium hover:text-blue-300 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center mx-auto group drop-shadow-sm"
-            >
-              <ArrowRight className="h-4 w-4 mr-2 rotate-180 group-hover:-translate-x-1 transition-transform duration-300" />
-              Back to home
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
+export default LandingPage;

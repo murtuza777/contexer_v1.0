@@ -1,12 +1,12 @@
-import { Files, Settings, Search, Terminal, Github } from "lucide-react";
+import { Files, Settings, Search, Terminal, Github, BookOpen, Eye, AlertTriangle } from "lucide-react";
 
 import { Tooltip } from "./Tooltip";
 import { cn } from "@/utils/cn";
 
 interface ActivityBarProps {
-  activeView: "files" | "search";
+  activeView: "files" | "search" | "context" | "observer" | "fixer";
   showTerminal: boolean;
-  onViewChange: (view: "files" | "search") => void;
+  onViewChange: (view: "files" | "search" | "context" | "observer" | "fixer") => void;
   onToggleTerminal: () => void;
 }
 
@@ -57,7 +57,7 @@ export function ActivityBar({
         </button>
       </Tooltip>
 
-
+      {/* Top-level nav now controls these features; hide duplicates in activity bar */}
 
       <div className="flex-grow" />
 

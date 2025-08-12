@@ -1,4 +1,4 @@
-import {create} from 'zustand'
+import { create } from 'zustand'
 import {persist} from 'zustand/middleware'
 import {MCPServer} from '@/types/mcp'
 import {useEffect} from 'react'

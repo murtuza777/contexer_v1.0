@@ -9,15 +9,15 @@ export function runInstallScript(scriptPath: string): Promise<void> {
         const installScriptPath = path.join('./', 'scripts', scriptPath)
 
         const env = {
-            ...process.env,
+            ...(typeof process !== 'undefined' ? process.env : {} as any),
             ELECTRON_RUN_AS_NODE: '1',
-            all_proxy: process.env.all_proxy || process.env.ALL_PROXY || undefined,
-            grpc_proxy: process.env.grpc_proxy || process.env.GRPC_PROXY || undefined,
-            http_proxy: process.env.http_proxy || process.env.HTTP_PROXY || undefined,
-            https_proxy: process.env.https_proxy || process.env.HTTPS_PROXY || undefined
+            all_proxy: (typeof process !== 'undefined' ? (process.env as any).all_proxy : undefined) || (typeof process !== 'undefined' ? process.env?.ALL_PROXY : undefined) || undefined,
+            grpc_proxy: (typeof process !== 'undefined' ? (process.env as any).grpc_proxy : undefined) || (typeof process !== 'undefined' ? process.env?.GRPC_PROXY : undefined) || undefined,
+            http_proxy: (typeof process !== 'undefined' ? (process.env as any).http_proxy : undefined) || (typeof process !== 'undefined' ? process.env?.HTTP_PROXY : undefined) || undefined,
+            https_proxy: (typeof process !== 'undefined' ? (process.env as any).https_proxy : undefined) || (typeof process !== 'undefined' ? process.env?.HTTPS_PROXY : undefined) || undefined
         }
 
-        const nodeProcess = spawn(process.execPath, [installScriptPath], {env})
+        const nodeProcess = spawn((typeof process !== 'undefined' ? process.execPath : 'node'), [installScriptPath], {env})
 
         nodeProcess.stdout.on('data', (data) => {
             console.info(`Script output: ${data}`)
@@ -40,7 +40,7 @@ export function runInstallScript(scriptPath: string): Promise<void> {
 }
 
 export async function getBinaryPath(name: string): Promise<string> {
-    let cmd = process.platform === 'win32' ? `${name}.exe` : name
+    let cmd = (typeof process !== 'undefined' ? process.platform : 'win32') === 'win32' ? `${name}.exe` : name
     const binariesDir = path.join(os.homedir(), '.contexer', 'bin')
     const binariesDirExists = await fs.existsSync(binariesDir)
     cmd = binariesDirExists ? path.join(binariesDir, cmd) : name

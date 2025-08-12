@@ -12,7 +12,7 @@ const PromptEnhanced = (props: PromptEnhancedProps) => {
   const [promptText, setPromptText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const baseUrl = process.env.APP_BASE_URL;
+  const baseUrl = (import.meta as any).env?.VITE_APP_BASE_URL;
   const { t } = useTranslation();
   useEffect(() => {
     if (isOpen) {

@@ -17,7 +17,7 @@ export const authService = {
             console.log(error)
         }
 
-        const res = await fetch(`${process.env.APP_BASE_URL}/api/appInfo?language=${language}`, {
+        const res = await fetch(`${(import.meta as any).env?.VITE_APP_BASE_URL || ''}/api/appInfo?language=${language}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
         })

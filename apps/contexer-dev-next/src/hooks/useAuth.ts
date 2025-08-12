@@ -1,5 +1,5 @@
 import { useState } from "react"
-import useUserStore from "../stores/userSlice"
+import useUserStore from "@/stores/userSlice"
 
 export interface AuthUser {
   id: string
@@ -13,7 +13,7 @@ export interface AuthResponse {
 }
 
 export function useAuth() {
-  const { user, isAuthenticated, login } = useUserStore()
+  const { user, login } = useUserStore()
   const [loading, setLoading] = useState(false)
 
   const signIn = async (email: string, password: string): Promise<AuthResponse> => {
@@ -70,7 +70,6 @@ export function useAuth() {
 
   return {
     user: user ? { id: user.id, email: user.email, username: user.username } : null,
-    isAuthenticated,
     loading,
     signIn,
     signUp,

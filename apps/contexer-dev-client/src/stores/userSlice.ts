@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export enum TierType {
+  FREE = 'FREE',
+  PRO = 'PRO',
+  ENTERPRISE = 'ENTERPRISE',
+}
+
 interface User {
   id: string;
   username: string;
@@ -8,6 +14,19 @@ interface User {
   avatar?: string;
   plan?: 'free' | 'pro' | 'enterprise';
   tokens?: number;
+  userQuota?: {
+    quota: number;
+    resetTime: Date;
+    tierType: TierType;
+    refillQuota: number;
+    usedQuota: number;
+    quotaTotal: number;
+    tierMessage: {
+      startTime: Date;
+      tier: TierType;
+      resetTime: Date;
+    };
+  };
 }
 
 interface UserState {
@@ -27,6 +46,9 @@ interface UserState {
   setLoading: (loading: boolean) => void;
   setRememberMe: (remember: boolean) => void;
   fetchUser: () => Promise<void>;
+  login: (user: User, token: string) => void;
+  logout: () => void;
+  isAuthenticated: () => boolean;
 }
 
 const useUserStore = create<UserState>()(
@@ -100,6 +122,21 @@ const useUserStore = create<UserState>()(
         } finally {
           set({ isLoading: false });
         }
+      },
+
+      login: (user: User, token: string) => {
+        set({ user, token });
+        localStorage.setItem('token', token);
+      },
+
+      logout: () => {
+        set({ user: null, token: null });
+        localStorage.removeItem('token');
+      },
+
+      isAuthenticated: () => {
+        const { user, token } = get();
+        return Boolean(user && token);
       },
     }),
     {

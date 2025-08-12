@@ -119,13 +119,6 @@ const config = {
             "background-position": "calc(100% + var(--shiny-width)) 0",
           },
         },
-        animation: {
-          "fade-in-down": "fade-in-down 0.5s ease-out",
-          "accordion-down": "accordion-down 0.2s ease-out",
-          "accordion-up": "accordion-up 0.2s ease-out",
-          "shiny-text": "shiny-text 8s infinite",
-          ripple: "ripple 1s cubic-bezier(0, 0, 0.2, 1)",
-        },
         gradient: {
           to: {
             backgroundPosition: "var(--bg-size) 0",
@@ -141,6 +134,9 @@ const config = {
         },
       },
       animation: {
+        "fade-in-down": "fade-in-down 0.5s ease-out",
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
         "shiny-text": "shiny-text 8s infinite",
         gradient: "gradient 8s linear infinite",
         "border-gradient": "border-gradient 3s ease infinite",

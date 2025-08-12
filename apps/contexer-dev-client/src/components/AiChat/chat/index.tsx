@@ -59,8 +59,8 @@ export const excludeFiles = [
     "/miniprogram/components/weicon/index.css",
 ];
 
-// Backend API configuration
-const API_BASE = process.env.APP_BASE_URL || 'http://localhost:3000';
+// Backend API configuration (use Vite env and safe fallback)
+const API_BASE = (import.meta as any).env?.VITE_APP_BASE_URL || window.location.origin || 'http://localhost:3000';
 console.log(API_BASE, 'API_BASE')
 
 enum ModelTypes {

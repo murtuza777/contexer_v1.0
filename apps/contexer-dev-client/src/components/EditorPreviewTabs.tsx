@@ -13,12 +13,12 @@ const ipcRenderer = window?.electron?.ipcRenderer;
 export async function findWeChatDevToolsPath() {
   try {
     // Get operating system type through IPC call to main process
-    const platform = await ipcRenderer.invoke("node-container:platform");
+      const platform = await ipcRenderer?.invoke?.("node-container:platform");
     console.log(platform, "platform");
     if (platform === "win32") {
       // Windows platform
       const defaultPath =
-        process.env.Path.split(";")
+        (typeof process !== 'undefined' && process.env?.Path ? process.env.Path : '').split(";")
           .find((value) => {
             value.includes("WeChat Web DevTools");
           })

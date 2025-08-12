@@ -7,6 +7,9 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
 import { useEditorStore } from "./stores/editorStore"
 import { FileExplorer } from "./components/IDEContent/FileExplorer"
 import { Search } from "./components/IDEContent/Search"
+import { ContextComposer } from "./components/IDEContent/ContextComposer"
+import { VisualObserver } from "./components/IDEContent/VisualObserver"
+import { ErrorFixer } from "./components/IDEContent/ErrorFixer"
 import { TeamExample } from "../Role"
 
 export default function WeIde() {
@@ -14,7 +17,7 @@ export default function WeIde() {
   const [showTerminal, setShowTerminal] = useState(true);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const { setDirty } = useEditorStore();
-  const [activeView, setActiveView] = useState<"files" | "search">("files");
+  const [activeView, setActiveView] = useState<"files" | "search" | "context" | "observer" | "fixer">("files");
   const [currentLine, setCurrentLine] = useState<number | undefined>();
 
   useEffect(() => {
@@ -89,11 +92,11 @@ export default function WeIde() {
           maxSize={30}
           className="flex-shrink-0 border-r border-[#e4e4e4] dark:border-[#333]"
         >
-          {activeView === "files" ? (
-            <FileExplorer onFileSelect={handleFileSelect} />
-          ) : (
-            <Search onFileSelect={handleFileSelect} />
-          )}
+          {activeView === "files" && <FileExplorer onFileSelect={handleFileSelect} />}
+          {activeView === "search" && <Search onFileSelect={handleFileSelect} />}
+          {activeView === "context" && <ContextComposer onFileSelect={handleFileSelect} />}
+          {activeView === "observer" && <VisualObserver onFileSelect={handleFileSelect} />}
+          {activeView === "fixer" && <ErrorFixer onFileSelect={handleFileSelect} />}
         </Panel>
 
         {/* File List Drag Handle */}

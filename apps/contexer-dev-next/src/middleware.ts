@@ -40,22 +40,8 @@ const CORS_HEADERS = {
 } as const;
 
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-    // Handle CORS preflight requests
-    if (request.method === "OPTIONS") {
-      return new NextResponse(null, { status: 200, headers: CORS_HEADERS });
-    }
-
-  if (pathname.startsWith("/wedev_public")) {
-    const response = NextResponse.next();
-    response.headers.set("Cross-Origin-Embedder-Policy", "unsafe-none");
-    response.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
-    return response;
-  }
-
-  return NextResponse.next();
+export function middleware(request: NextRequest) {
+  return intlMiddleware(request);
 }
 
 export const config = {

@@ -7,6 +7,10 @@ import AiChat from "./components/AiChat";
 import Login from "./components/Login";
 import LandingPage from "./components/LandingPage";
 import EditorPreviewTabs from "./components/EditorPreviewTabs";
+import { useFeatureNav } from "./stores/featureNavSlice";
+import { ContextComposer } from "./components/WeIde/components/IDEContent/ContextComposer";
+import { VisualObserver } from "./components/WeIde/components/IDEContent/VisualObserver";
+import { ErrorFixer } from "./components/WeIde/components/IDEContent/ErrorFixer";
 import "./utils/i18";
 import classNames from "classnames";
 import {ChatMode} from "./types/chat";
@@ -16,12 +20,16 @@ import {UpdateTip} from "./components/UpdateTip"
 import useInit from "./hooks/useInit";
 import {Loading} from "./components/loading";
 import TopViewContainer from "./components/TopView";
+import ChatHistorySlider from "./components/ChatHistorySlider";
+
 
 function App() {
     const {mode, initOpen} = useChatModeStore();
-    const {isLoginModalOpen, closeLoginModal, openLoginModal, isAuthenticated} = useUserStore();
+    const {isLoginModalOpen, closeLoginModal, openLoginModal, isAuthenticated: isAuthenticatedFn} = useUserStore();
+    const isAuthenticated = isAuthenticatedFn();
     const {isDarkMode} = useInit();
-    const [showLandingPage, setShowLandingPage] = useState(!isAuthenticated);
+    const { active } = useFeatureNav();
+    const [showLandingPage, setShowLandingPage] = useState(true);
     const [isGuestMode, setIsGuestMode] = useState(false);
 
     // Handle guest access - sets a temporary authenticated state
@@ -67,11 +75,31 @@ function App() {
             >
                 <Header/>
                 <div className="flex flex-row w-full h-full max-h[calc(100%-48px)] bg-white dark:bg-[#111]">
-                    <AiChat/>
-                    {mode === ChatMode.Builder && !initOpen && <EditorPreviewTabs/>}
+                    {active === 'chat' && (
+                      <>
+                        <AiChat/>
+                        {mode === ChatMode.Builder && !initOpen && <EditorPreviewTabs/>}
+                      </>
+                    )}
+                    {active === 'context' && (
+                      <div className="flex-1 m-2 rounded-lg border border-gray-200 dark:border-[#333] overflow-hidden">
+                        <ContextComposer />
+                      </div>
+                    )}
+                    {active === 'observer' && (
+                      <div className="flex-1 m-2 rounded-lg border border-gray-200 dark:border-[#333] overflow-hidden">
+                        <VisualObserver />
+                      </div>
+                    )}
+                    {active === 'fixer' && (
+                      <div className="flex-1 m-2 rounded-lg border border-gray-200 dark:border-[#333] overflow-hidden">
+                        <ErrorFixer />
+                      </div>
+                    )}
                 </div>
             </div>
             <UpdateTip/>
+            <ChatHistorySlider />
             <ToastContainer
                 position="top-center"
                 autoClose={2000}
