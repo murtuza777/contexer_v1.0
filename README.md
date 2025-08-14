@@ -1,177 +1,102 @@
 
+# 🚀 Contexer – Autonomous AI Development Platform
 
-## Contexer Agentic Plan (Viber, Visual Observer, Error Fixer, Context Composer)
+**Contexer** is a next-generation autonomous development platform that can **understand your project idea, generate production-ready code, and iteratively refine it until it matches your exact requirements** — all while fixing errors automatically.
 
-The codebase already has a strong builder pipeline and in-browser/Electron execution. Below is a practical, incremental plan to add your four core features and migrate persistence to Supabase (PostgreSQL):
+Think of it as your **24/7 AI development team** that:
+- Reads your project context like a senior architect
+- Writes high-quality code
+- Tests and verifies every feature
+- Fixes errors instantly
+- Keeps improving until the feature is perfect
 
-### 1) Viber — Autonomous Builder Agent
-- Purpose: Orchestrate prompt sessions that iteratively build/repair features based on project context and live observations.
-- Reuse: Builder mode pipeline at `apps/we-dev-next/src/app/api/chat/handlers/builderHandler.ts` and prompt builder in `apps/we-dev-next/src/app/api/chat/utils/promptBuilder.ts`.
-- Add:
-  - Orchestrator API: `POST /api/agents/viber/run` that accepts `project_id`, `target_feature`, and recent observations/errors. It will:
-    - Pull latest Context Composer data (see Section 2)
-    - Construct a repair/build prompt (inject files, diffs, and observations)
-    - Call existing builder stream to apply edits
-    - Log run, diffs, and outcome to Supabase (see Data Model)
-  - Autonomy loop: keep running until user stops or acceptance check passes. Acceptance comes from Visual Observer status or user feedback.
-- Hooks you already have:
-  - File selection/diff: `processFiles`, `getHistoryDiff`
-  - Large context handling: `handleTokenLimit`
+---
 
-### 2) Context Composer — Input Module
-- Purpose: Capture and version the product idea, stack, user stories/README.md for Viber.
-- UI (client): New panel `Context Composer` in the left sidebar (client app at `apps/we-dev-client`). Inputs:
-  - Plain English app description
-  - README.md upload/paste
-  - Stack selection (e.g., Next.js + Supabase)
-  - Non-functional requirements, constraints
-- Persistence (server): Supabase table `project_contexts` (schema below). CRUD API:
-  - `GET/POST/PUT /api/context` scoped by `project_id` and `user_id`
-- Consumption: Viber reads the latest context snapshot per run; prevent mid-run mutations (only allow updates between sessions).
+## 🌟 What Makes Contexer Different?
 
-### 3) Visual Observer — Live Preview + Terminal Watcher
-- Purpose: Observe preview/browser/terminal to detect failures and success criteria.
-- Terminal (client): You already detect errors in `apps/we-dev-client/src/components/WeIde/components/Terminal/utils/weTerminal.ts` (e.g., matching “error”/“failure” and emitting). Extend to:
-  - Normalize errors (strip ANSI) and push to a small in-memory queue and to Supabase `observations` table via `POST /api/observer`.
-  - Extract dev server URL (already parsed) and register it as the preview target for the observer.
-- Browser Preview (client): Enhance `PreviewIframe` to capture:
-  - `window.onerror`, `unhandledrejection`, console.error, and network failures
-  - Blank screen detection (no paint after N seconds)
-  - Send structured events to the same observer endpoint; surface in `ErrorDisplay` UI.
-- Acceptance checks: For a selected feature, define lightweight checks (URL contains text, element present, no console errors). Viber uses these signals to decide whether to continue or request user approval.
+Unlike regular AI coding tools that only respond to prompts, **Contexer builds an app end-to-end** by combining four powerful components:
 
-### 4) Error Fixer — Auto Repair Loop
-- Purpose: Automatically trigger a focused repair prompt when Visual Observer reports a failure.
-- Flow:
-  - Observer event -> Debounce/group -> Build a minimal “repair prompt” including: error snippet, stack, last diff, and relevant files
-  - Call builder handler with a repair objective (no new features)
-  - Apply edits, re-run, and re-check
-- UI: Keep the existing `ErrorDisplay` but add an “Auto-fix on” toggle per project; show last fix attempts and provide “Revert”/“Apply” controls.
+1. **📝 Context Composer** – Your project blueprint  
+   - Answer simple guided questions about your app:  
+     _Description, Tech Stack, Features, Detailed Functionality, README, etc._  
+   - Your answers are stored as **structured context** for the AI.  
+   - You can **update, add, or change features anytime**.
 
-### Data Model (Supabase / PostgreSQL)
-Create these tables (simplified). Use RLS as appropriate.
+2. **🤖 Viber Agent** – The intelligent project manager  
+   - Reads your context from the Composer.  
+   - Generates **precise, high-quality prompts** for the AI Builder.  
+   - Decides the build order of features.  
+   - Coordinates with the Visual Observer for continuous improvement.  
+   - Sends all generated prompts into the AI Builder's chat (so you can still add manual prompts).
 
-```sql
--- projects (optional if you already have one)
-create table if not exists projects (
-  id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null,
-  name text not null,
-  created_at timestamptz default now()
-);
+3. **👀 Visual Observer** – The feature quality inspector  
+   - Actively monitors the build process.  
+   - Checks which features are working and compares them to your context requirements.  
+   - Detects missing or incorrect features.  
+   - Tells Viber to re-prompt the AI Builder with **"Build this correctly"** instructions.  
+   - Ensures features are refined until **production-ready**.
 
--- project_contexts: latest idea/stack/README and history
-create table if not exists project_contexts (
-  id uuid primary key default gen_random_uuid(),
-  project_id uuid references projects(id) on delete cascade,
-  user_id uuid not null,
-  description text,
-  readme text,
-  stack jsonb,
-  version int not null default 1,
-  created_at timestamptz default now()
-);
+4. **🛠 Error Fixer** – The automatic debugger  
+   - Monitors for linter, terminal, console, or runtime errors.  
+   - Fixes them instantly without you having to write any prompts.  
+   - Works quietly in the background so you can focus on the build.
 
--- runs: each Viber session or repair attempt
-create table if not exists runs (
-  id uuid primary key default gen_random_uuid(),
-  project_id uuid references projects(id) on delete cascade,
-  user_id uuid,
-  type text check (type in ('build','repair')),
-  target_feature text,
-  status text check (status in ('running','succeeded','failed','stopped')),
-  prompt text,
-  diff_summary text,
-  created_at timestamptz default now(),
-  finished_at timestamptz
-);
+---
 
--- observations: terminal/browser signals
-create table if not exists observations (
-  id uuid primary key default gen_random_uuid(),
-  project_id uuid references projects(id) on delete cascade,
-  run_id uuid references runs(id) on delete cascade,
-  source text check (source in ('terminal','preview','network','console')),
-  level text check (level in ('info','warn','error')),
-  message text,
-  raw jsonb,
-  created_at timestamptz default now()
-);
+## ⚡ How the Build Process Works
 
--- prompts: prompts and model metadata for replay/debug
-create table if not exists prompts (
-  id uuid primary key default gen_random_uuid(),
-  run_id uuid references runs(id) on delete cascade,
-  role text,
-  content text,
-  meta jsonb,
-  created_at timestamptz default now()
-);
-```
+1. **Provide Your Context**  
+   Use the **Context Composer** to describe your app, tech stack, and features in detail.
 
-### Supabase Integration (replacing MongoDB)
-- Install: `pnpm add @supabase/supabase-js` in both apps.
-- Env (server `apps/we-dev-next/.env`):
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `SUPABASE_SERVICE_ROLE_KEY` (server-only)
-- Server client: add `apps/we-dev-next/src/lib/supabase.ts` to create Admin client for DB writes.
-- Client: optional anon client for reading project context; write operations go through server routes.
-- Mongoose note: `apps/we-dev-next/package.json` includes `mongoose`, but the current builder pipeline does not require it. New persistence should prefer Supabase. Gradually migrate any user/session or credit/quota tracking to Supabase tables or Supabase Auth.
+2. **Start the Agent**  
+   Click the **Start** button (like v0.dev’s interface) to launch the Viber Agent.
 
-### Minimal New Endpoints (server)
-- `POST /api/context` — create/update a context snapshot
-- `GET /api/context?project_id=...` — latest snapshot
-- `POST /api/observer` — ingest observation events
-- `POST /api/agents/viber/run` — start/continue a run; returns stream/log id
+3. **Viber Takes Over**  
+   - Reads your context.
+   - Generates a **perfect AI prompt** to begin development.
+   - Sends it to the **AI Builder** (in the chat, so you can see and add your own prompts anytime).
 
-### Client Hook Points (existing code to extend)
-- Terminal events: `apps/we-dev-client/src/components/WeIde/components/Terminal/utils/weTerminal.ts`
-- Error surface: `apps/we-dev-client/src/components/AiChat/chat/components/ChatInput/ErrorDisplay.tsx` and `useFileStore` error queue
-- Preview capture: enhance `apps/we-dev-client/src/components/PreviewIframe.tsx` to forward console/network errors
-- Event bus: reuse the existing emitter utilities in `apps/we-dev-client/src/components/AiChat/utils/EventEmitter.ts`
+4. **AI Builder Creates Your Project**  
+   - Generates the codebase and features.  
+   - Viber + Visual Observer loop begins.
 
-### Autonomy & Control
-- A project-level toggle to start/stop Viber autonomy
-- Per-run “Approve/Reject” modal when acceptance is ambiguous
-- Revert: store file diffs per run; provide “Revert last run” in the UI using the stored `oldFiles` + diff
+5. **Continuous Improvement Loop**  
+   - Visual Observer checks each feature → compares to context → reports to Viber.  
+   - Viber sends new prompts → AI Builder refines code.  
+   - Loop continues until feature matches your exact requirement.
 
-### Quick Setup Checklist
-- Add Supabase env and install `@supabase/supabase-js`
-- Create the four tables above (or adjust to your needs)
-- Add the three new API routes
-- Extend Terminal + Preview instrumentation
-- Add the `Context Composer` panel in the client
-- Implement the `Viber` run loop using the existing builder handler
+6. **Error Handling**  
+   - Any errors? The Error Fixer steps in automatically.  
+   - You never have to manually debug.
 
-### User Flow
-1. User lands → logs in → dashboard
-2. Opens `Context Composer`, defines the app idea, README, and stack, saves
-3. Starts `Viber` with a target feature → builder generates edits
-4. Visual Observer watches terminal/preview; Error Fixer auto-repairs
-5. On success, Viber asks for approval; otherwise, continues autonomously until stopped
-6. User can stop/revert any time; history is tracked per run
-## Question
-- If electron reports an error during the second run, please delete the client workspace
-- electron If there is no preview when starting, run pnpm run electron:dev
+---
 
-## Contact US
+## 💡 Why Developers Love Contexer
 
-send email to <a href="mailto:enzuo@wegc.cn">enzuo@wegc.cn</a>
+- **No constant re-prompting** – The system self-corrects.
+- **End-to-end automation** – From idea to production-ready code.
+- **Error-free builds** – Automatic fixing of common issues.
+- **Context-aware decisions** – Builds what you actually asked for.
+- **Manual control preserved** – You can still send custom prompts to AI Builder.
 
-## WeChat Group Chat
-<img src="./docs/img/code.png" alt="alt text" width="200"/>
+---
 
-If you cannot join the WeChat group, you can add
+## 🛠 Tech Stack
 
-<img src="./docs/img/self.png" alt="alt text" width="200"/>
+- **Frontend**: Next.js + TailwindCSS
+- **Backend**: Node.js + Express + WebSockets
+- **Database**: Supabase (PostgreSQL)
+- **AI Models**: Mistral 7B via Ollama
+- **Deployment**: Vercel + Cloudflare Tunnel
 
-## Star History
+---
 
-<a href="https://star-history.com/?utm_source=bestxtools.com#contexer-dev/contexer&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=contexer-dev/contexer&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=contexer-dev/contexer&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=contexer-dev/contexer&type=Date" />
- </picture>
-</a>
+## 📜 License
+
+This project is **proprietary** and intended for internal Contexer team development.
+All rights reserved.
+
+---
+
+> 💬 *"With Contexer, building an app becomes a conversation — not a chore."*
+
