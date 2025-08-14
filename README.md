@@ -1,102 +1,175 @@
+# 🚀 Contexer – The Autonomous AI Developer
 
-# 🚀 Contexer – Autonomous AI Development Platform
+> **Describe your app. Watch it build itself.**
 
-**Contexer** is a next-generation autonomous development platform that can **understand your project idea, generate production-ready code, and iteratively refine it until it matches your exact requirements** — all while fixing errors automatically.
+Contexer is not just another AI code generator.  
+It’s the world’s first **autonomous AI development agent** that **builds, observes, and fixes** web applications — with minimal human intervention.
 
-Think of it as your **24/7 AI development team** that:
-- Reads your project context like a senior architect
-- Writes high-quality code
-- Tests and verifies every feature
-- Fixes errors instantly
-- Keeps improving until the feature is perfect
+Unlike traditional AI builders that require endless prompting, **Contexer learns your vision once** and then **iteratively improves** your app until it works exactly as intended.
 
----
-
-## 🌟 What Makes Contexer Different?
-
-Unlike regular AI coding tools that only respond to prompts, **Contexer builds an app end-to-end** by combining four powerful components:
-
-1. **📝 Context Composer** – Your project blueprint  
-   - Answer simple guided questions about your app:  
-     _Description, Tech Stack, Features, Detailed Functionality, README, etc._  
-   - Your answers are stored as **structured context** for the AI.  
-   - You can **update, add, or change features anytime**.
-
-2. **🤖 Viber Agent** – The intelligent project manager  
-   - Reads your context from the Composer.  
-   - Generates **precise, high-quality prompts** for the AI Builder.  
-   - Decides the build order of features.  
-   - Coordinates with the Visual Observer for continuous improvement.  
-   - Sends all generated prompts into the AI Builder's chat (so you can still add manual prompts).
-
-3. **👀 Visual Observer** – The feature quality inspector  
-   - Actively monitors the build process.  
-   - Checks which features are working and compares them to your context requirements.  
-   - Detects missing or incorrect features.  
-   - Tells Viber to re-prompt the AI Builder with **"Build this correctly"** instructions.  
-   - Ensures features are refined until **production-ready**.
-
-4. **🛠 Error Fixer** – The automatic debugger  
-   - Monitors for linter, terminal, console, or runtime errors.  
-   - Fixes them instantly without you having to write any prompts.  
-   - Works quietly in the background so you can focus on the build.
+![Status](https://img.shields.io/badge/Status-MVP%20Alpha-blue) ![Next.js](https://img.shields.io/badge/Next.js-15.x-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue) ![Supabase](https://img.shields.io/badge/Database-Supabase-green)
 
 ---
 
-## ⚡ How the Build Process Works
+## 🌟 What Is Contexer?
 
-1. **Provide Your Context**  
-   Use the **Context Composer** to describe your app, tech stack, and features in detail.
+Contexer is an **autonomous AI development platform** where you define the **context** of your project — not through vague prompts, but through structured input — and an AI agent (**Viber**) takes over to:
+
+1. **Build** your app using AI
+2. **Observe** the preview and terminal in real time
+3. **Detect** when features don’t work or errors occur
+4. **Fix** issues automatically (with your approval)
+5. **Repeat** until your app is production-ready
+
+> 🔥 It’s like having a **junior developer who never sleeps**, learns from your vision, and asks for approval before making changes.
+
+---
+
+## 🧠 How It Works
+
+Contexer replaces the **prompt → generate → fix → repeat** loop with a **closed-loop autonomous system**:
+
+```
+  ┌─────────────────┐
+  │  Context Composer │ ← You define the vision
+  └────────┬────────┘
+           │ (Project Context)
+           ▼
+  ┌──────────────┐
+  │     Viber       │ ← Autonomous AI Agent
+  │ (Builds & Fixes) │ ← Orchestrates everything
+  └──────┬─────────┘
+         │ (Generates prompts)
+         ▼
+  ┌──────────────────┐    ┌──────────────────────┐
+  │   AI Builder      │ ←→ │   Visual Observer     │
+  │ (File Generator)  │    │ (Eyes on Preview)     │
+  └────────┬─────────┘    └────────────┬─────────┘
+           │                           │ (Is it working?)
+           │                           ▼
+           └───────────────→ [Feature Not Working?]
+                                     │
+                     No ┌───────────┴────────────┐ Yes
+                        ▼                        ▼
+                [Generate Fix Prompt]    [Move to Next Feature]
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │  Error Fixer  │ ← Auto-fixes errors
+                 │ (With Approval)│ ← You’re always in control
+                 └──────────────┘
+```
+
+### ✅ The User Flow
+
+1. **Define Your Vision**  
+   → Use **Context Composer** to describe your app’s goal, user stories, tech stack, and even upload a `README.md`
 
 2. **Start the Agent**  
-   Click the **Start** button (like v0.dev’s interface) to launch the Viber Agent.
+   → Click **"Start Viber"** — the AI agent reads your context and begins building
 
-3. **Viber Takes Over**  
-   - Reads your context.
-   - Generates a **perfect AI prompt** to begin development.
-   - Sends it to the **AI Builder** (in the chat, so you can see and add your own prompts anytime).
+3. **Watch It Build Itself**  
+   → Viber generates code, starts the dev server, and watches the preview and terminal
 
-4. **AI Builder Creates Your Project**  
-   - Generates the codebase and features.  
-   - Viber + Visual Observer loop begins.
+4. **It Fixes Its Own Errors**  
+   → If a linter, terminal, or console error occurs, **Error Fixer** suggests a fix — you approve it with one click
 
-5. **Continuous Improvement Loop**  
-   - Visual Observer checks each feature → compares to context → reports to Viber.  
-   - Viber sends new prompts → AI Builder refines code.  
-   - Loop continues until feature matches your exact requirement.
+5. **It Validates Features**  
+   → **Visual Observer** checks if features work as intended — if not, Viber generates a new prompt to improve them
 
-6. **Error Handling**  
-   - Any errors? The Error Fixer steps in automatically.  
-   - You never have to manually debug.
+6. **You Stay in Control**  
+   → Every major change requires **your approval** — no surprise breakages
 
 ---
 
-## 💡 Why Developers Love Contexer
+## 🔁 Why Contexer Is Different
 
-- **No constant re-prompting** – The system self-corrects.
-- **End-to-end automation** – From idea to production-ready code.
-- **Error-free builds** – Automatic fixing of common issues.
-- **Context-aware decisions** – Builds what you actually asked for.
-- **Manual control preserved** – You can still send custom prompts to AI Builder.
+| Feature | Contexer | Bolt / Lovable / v0 |
+|--------|---------|-------------------|
+| **Prompting** | One-time context setup → AI remembers | Constant prompting needed |
+| **Autonomy** | Self-correcting loop: build → observe → fix | Manual: you detect and fix errors |
+| **Error Handling** | Auto-detects and suggests fixes | You copy-paste errors into chat |
+| **Context Awareness** | Remembers your project goals across sessions | Forgets context between prompts |
+| **User Stories** | Tracks feature completion against user stories | No feature validation |
+| **Progress Tracking** | Shows % complete based on build status | No progress feedback |
+| **Approval System** | Never auto-applies — you’re always in control | Risk of unintended changes |
 
----
-
-## 🛠 Tech Stack
-
-- **Frontend**: Next.js + TailwindCSS
-- **Backend**: Node.js + Express + WebSockets
-- **Database**: Supabase (PostgreSQL)
-- **AI Models**: Mistral 7B via Ollama
-- **Deployment**: Vercel + Cloudflare Tunnel
+> 💡 **Contexer doesn’t just generate code — it ships working apps.**
 
 ---
 
-## 📜 License
+## 🧩 Core Features
 
-This project is **proprietary** and intended for internal Contexer team development.
-All rights reserved.
+### 🧠 Context Composer
+The **single source of truth** for your project.  
+You describe:
+- App goal
+- User stories ("As a user, I want to...")
+- Tech stack (Next.js, React, etc.)
+- Upload a `README.md`
+
+Viber uses this context **for every decision** — no more guessing what you meant.
+
+### 🤖 Viber – The Autonomous Agent
+The **CEO of your development process**.  
+Viber:
+- Reads your context
+- Generates AI prompts
+- Watches the build
+- Decides when to fix, improve, or move on
+- Always asks for approval
+
+It’s not magic — it’s **context-driven autonomy**.
+
+### 👁️ Visual Observer
+The **eyes** of the system.  
+It:
+- Streams terminal logs in real time
+- Highlights errors (no more scrolling)
+- Tracks build progress (0% → 100%)
+- Validates if features work as intended
+
+No vision AI needed — just smart log parsing and DOM checks.
+
+### 🛠️ Error Fixer
+The **hands** that fix problems.  
+When an error occurs:
+- Auto-detects the issue
+- Uses AI to suggest a fix
+- Shows a **diff preview**
+- Waits for **your approval**
+- Applies the change
+
+No more copy-pasting errors into ChatGPT.
 
 ---
 
-> 💬 *"With Contexer, building an app becomes a conversation — not a chore."*
+## 🎯 Who Is Contexer For?
 
+### ✅ Perfect For:
+- **Indie Hackers** who want to ship apps fast
+- **Developers** tired of re-prompting loop,hallucinations
+- **Product Managers** who can describe features but not code
+- **Bootstrapped Founders** building MVPs alone
+- **AI Enthusiasts** exploring autonomous systems
+
+## 🚀 The Future of Development
+
+Contexer is the first step toward **AI developers that can build, test, and fix apps with minimal input** — while keeping **you in control**.
+
+We believe the future of development is:
+- **Context-driven**, not prompt-driven
+- **Autonomous**, but never out of control
+- **Observant**, not blind
+- **Self-correcting**, not error-prone
+
+---
+
+## 📄 License
+
+MIT
+
+---
+
+> **Contexer** — Where vision becomes reality, autonomously.  
+> Built by developers, for developers.
