@@ -41,6 +41,17 @@ const CORS_HEADERS = {
 
 
 export function middleware(request: NextRequest) {
+  // Skip i18n middleware for API routes
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    // Add CORS headers for API routes
+    const response = NextResponse.next();
+    Object.entries(CORS_HEADERS).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
+  }
+  
+  // Apply i18n middleware for non-API routes
   return intlMiddleware(request);
 }
 
@@ -48,7 +59,7 @@ export const config = {
   matcher: [
     "/",
     "/((?!api|_next/static|_next/image|favicon.ico|wedev).*)",
-    "/api/:path*",
+    "/api/:path*", // Keep this to handle CORS for API routes
     "/wedev/:path*",
   ],
   runtime: "nodejs",

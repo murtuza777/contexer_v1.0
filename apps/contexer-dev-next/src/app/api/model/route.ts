@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { modelConfig } from "./config";
+
 // Get model configuration, can be migrated to configuration center
 export async function POST() {
     // Filter out key part
@@ -14,5 +15,10 @@ export async function POST() {
             functionCall: item.functionCall,
         }
     })
-     return NextResponse.json(config);
+    return NextResponse.json(config);
+}
+
+// Handle OPTIONS requests for CORS preflight
+export async function OPTIONS() {
+    return new Response(null, { status: 200 });
 }

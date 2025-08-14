@@ -27,8 +27,8 @@ export function getOpenAIModel(baseURL: string, apiKey: string, model: string) {
   }
   if (provider === "openrouter") {
     const openai = createOpenAI({
-      apiKey: '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',
-      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: process.env.OPENROUTER_API_KEY || apiKey,
+      baseURL: process.env.OPENROUTER_API_URL || baseURL,
     });
     initOptions = {};
     return openai(model);
@@ -79,10 +79,20 @@ export function streamTextFn(
   options?: StreamingOptions,
   modelKey?: string,
 ) {
+  const modelConfigItem = modelConfig.find((item) => item.modelKey === modelKey);
+  if (!modelConfigItem) {
+    throw new Error(`Model ${modelKey} not found in configuration`);
+  }
+  
   const {
     apiKey = process.env.THIRD_API_KEY,
     apiUrl = process.env.THIRD_API_URL,
-  } = modelConfig.find((item) => item.modelKey === modelKey);
+  } = modelConfigItem;
+
+  if (!apiKey || !apiUrl) {
+    throw new Error(`Missing API configuration for model ${modelKey}. Please check your environment variables.`);
+  }
+  
   const model = getOpenAIModel(
     apiUrl,
     apiKey,

@@ -46,3 +46,8 @@ export async function POST(request: Request) {
     }
 }
 
+// Handle OPTIONS requests for CORS preflight
+export async function OPTIONS() {
+    return new Response(null, { status: 200 });
+}
+

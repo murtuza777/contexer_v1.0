@@ -28,6 +28,7 @@ import {
   FileText,
   Eye,
 } from "lucide-react"
+import LogoMark from "@/components/LogoMark"
 
 // Skeleton Components
 const SkeletonCard = () => (
@@ -325,7 +326,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-blue-600 relative overflow-hidden">
       {/* Enhanced Mouse Follower with Micro-interactions */}
       <div
         className="fixed w-6 h-6 bg-blue-400/20 rounded-full pointer-events-none z-50 transition-all duration-300 ease-out"
@@ -366,10 +367,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center group cursor-pointer transform hover:scale-105 transition-all duration-300 active:scale-95">
-              <div className="relative">
-                <Code2 className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-all duration-300 group-hover:rotate-12" />
-                <div className="absolute inset-0 bg-blue-400 rounded-full blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-              </div>
+              <LogoMark className="w-9 h-9" />
               <span className="ml-2 text-xl font-bold text-white drop-shadow-lg">Contexer</span>
             </div>
 
@@ -572,7 +570,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
       </section>
 
       {/* Enhanced How It Works Section */}
-      <section id="how-it-works" className="py-20 relative" data-animate>
+      <section id="how-it-works" data-animate className={`py-20 sm:py-32 transition-all duration-1000 ${isVisible['how-it-works'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-950/30 to-slate-950/30 backdrop-blur-sm" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div
@@ -647,7 +645,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
       </section>
 
       {/* Enhanced Features Section */}
-      <section className="py-20 relative" id="features" data-animate>
+      <section id="features" data-animate className={`py-20 sm:py-32 bg-white/5 transition-all duration-1000 ${isVisible['features'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div
             className={`text-center mb-16 transition-all duration-1000 ${
@@ -695,7 +693,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                 ].map((feature, index) => (
                   <Card
                     key={index}
-                    className={`bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 hover:border-blue-500/40 transition-all duration-500 hover:scale-105 hover:-translate-y-2 active:scale-95 hover:shadow-2xl hover:shadow-blue-500/20 group relative overflow-hidden shadow-lg cursor-pointer ${
+                    className={`bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 hover:border-blue-500/40 transition-all duration-500 hover:scale-105 hover:-translate-y-2 active:scale-95 group relative overflow-hidden shadow-lg cursor-pointer ${
                       isVisible.features ? "animate-fade-in-up opacity-100" : "opacity-0 translate-y-10"
                     }`}
                     style={{ animationDelay: `${index * 150}ms` }}
@@ -705,7 +703,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
                       <div
                         className={`bg-gradient-to-r ${feature.gradient} p-3 rounded-xl w-fit mx-auto mb-4 group-hover:scale-125 group-hover:rotate-12 transition-all duration-500 shadow-lg`}
                       >
-                        <div className="text-white">{feature.icon}</div>
+                        <div className="font-sans text-white bg-gradient-to-br from-gray-900 via-blue-900 to-gray-800">{feature.icon}</div>
                       </div>
                       <CardTitle className="text-lg text-black font-bold group-hover:text-blue-700 transition-colors duration-300">
                         {feature.title}
@@ -729,7 +727,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
       </section>
 
       {/* Enhanced Pricing Section */}
-      <section id="pricing" className="py-20 relative" data-animate>
+      <section id="pricing" data-animate className={`py-20 sm:py-32 transition-all duration-1000 ${isVisible['pricing'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-950/30 to-slate-950/30 backdrop-blur-sm" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div
@@ -856,7 +854,7 @@ export default function LandingPage({ onGuestAccess }: LandingPageProps) {
           <div className="grid md:grid-cols-4 gap-8">
             <div className="col-span-2">
               <div className="flex items-center mb-4 group cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-300">
-                <Code2 className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-all duration-300 group-hover:rotate-12" />
+                <LogoMark className="w-9 h-9" />
                 <span className="ml-2 text-xl font-bold text-white drop-shadow-lg">Contexer</span>
               </div>
               <p className="text-white font-medium max-w-md leading-relaxed drop-shadow-sm">
@@ -953,10 +951,7 @@ function LoginPage({ onBack, onSignup, onGuestAccess, isGuestLoading }: {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
         <CardHeader className="text-center relative z-10">
           <div className="flex items-center justify-center mb-6 group">
-            <div className="relative">
-              <Code2 className="h-10 w-10 text-blue-400 group-hover:rotate-12 transition-transform duration-300" />
-              <div className="absolute inset-0 bg-blue-400 rounded-full blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-            </div>
+            <LogoMark className="w-12 h-12" />
             <span className="ml-3 text-2xl font-bold text-white drop-shadow-lg">Contexer</span>
           </div>
           <CardTitle className="text-3xl text-white font-bold mb-2 drop-shadow-md">Welcome Back</CardTitle>
@@ -1157,10 +1152,7 @@ function SignupPage({ onBack, onLogin, onGuestAccess, isGuestLoading }: {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
         <CardHeader className="text-center relative z-10">
           <div className="flex items-center justify-center mb-6 group">
-            <div className="relative">
-              <Code2 className="h-10 w-10 text-blue-400 group-hover:rotate-12 transition-transform duration-300" />
-              <div className="absolute inset-0 bg-blue-400 rounded-full blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-            </div>
+            <LogoMark className="w-12 h-12" />
             <span className="ml-3 text-2xl font-bold text-white drop-shadow-lg">Contexer</span>
           </div>
           <CardTitle className="text-3xl text-white font-bold mb-2 drop-shadow-md">Create Account</CardTitle>

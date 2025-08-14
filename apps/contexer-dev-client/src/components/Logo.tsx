@@ -1,5 +1,5 @@
-import { Code } from "lucide-react";
 import { motion } from "framer-motion";
+import LogoMark from "@/components/LogoMark";
 
 export const Logo = () => (
   <div className="group flex items-center gap-3">
@@ -13,7 +13,7 @@ export const Logo = () => (
         animate={{ x: ["-200%", "200%"] }}
         transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
       />
-      <Code size={50} className=" text-white relative z-10" />
+      <LogoMark className="relative z-10 drop-shadow-lg w-14 h-14" />
     </motion.div>
   </div>
 );

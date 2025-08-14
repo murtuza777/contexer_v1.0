@@ -30,15 +30,25 @@ export async function streamResponse(
         tools: toolList,
         toolCallStreaming: true,
         onError: (err: any) => {
+            console.error('AI API Error:', err);
+            
             // Get error information, prioritize cause property
-            const errorCause = err?.cause?.message || err?.cause || err?.error?.message
-            const msg = errorCause || err?.errors?.[0]?.responseBody || JSON.stringify(err);
-
-            if (msg) {
-                throw new Error(msg);
+            const errorCause = err?.cause?.message || err?.cause || err?.error?.message;
+            let msg = errorCause || err?.errors?.[0]?.responseBody || err?.message || JSON.stringify(err);
+            
+            // Add specific error messages for common issues
+            if (msg.includes('timeout') || msg.includes('ETIMEDOUT') || msg.includes('Connect Timeout')) {
+                msg = 'API request timed out. Please check your API endpoint configuration and network connection.';
+            } else if (msg.includes('401') || msg.includes('unauthorized')) {
+                msg = 'Invalid API key. Please check your API key configuration.';
+            } else if (msg.includes('404')) {
+                msg = 'API endpoint not found. Please check your API URL configuration.';
+            } else if (msg.includes('rate limit') || msg.includes('429')) {
+                msg = 'API rate limit exceeded. Please try again later.';
             }
-            const error = new Error(msg || JSON.stringify(err));
-            error.cause = msg; // Save original error information to cause
+            
+            const error = new Error(`AI API Error: ${msg}`);
+            error.cause = msg;
             throw error;
         },
         onFinish: async (response) => {

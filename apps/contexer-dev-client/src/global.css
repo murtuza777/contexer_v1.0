@@ -1,6 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
 /* 全局光标样式 */
 input, textarea, [contenteditable="true"] {
   caret-color: #000000 !important;
