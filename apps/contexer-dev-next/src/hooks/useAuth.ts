@@ -13,17 +13,30 @@ export interface AuthResponse {
 }
 
 export function useAuth() {
-  const { user, login } = useUserStore()
+  const { user, login, logout } = useUserStore()
   const [loading, setLoading] = useState(false)
 
   const signIn = async (email: string, password: string): Promise<AuthResponse> => {
     setLoading(true)
     try {
-      // For now, simulate auth - replace with real auth later
-      await new Promise(r => setTimeout(r, 300))
-      const mockUser = { id: "demo", email, username: email.split("@")[0] }
-      login(mockUser as any, "demo-token")
-      return { data: { user: mockUser }, error: null }
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        return { data: null, error: data.error || 'Login failed' }
+      }
+
+      // Store user data and tokens
+      login(data.user, data.accessToken)
+      
+      return { data: { user: data.user }, error: null }
     } catch (error) {
       return { data: null, error: "Authentication failed" }
     } finally {
@@ -34,11 +47,24 @@ export function useAuth() {
   const signUp = async (email: string, password: string, name?: string): Promise<AuthResponse> => {
     setLoading(true)
     try {
-      // For now, simulate auth - replace with real auth later
-      await new Promise(r => setTimeout(r, 300))
-      const mockUser = { id: "demo", email, username: name || email.split("@")[0] }
-      login(mockUser as any, "demo-token")
-      return { data: { user: mockUser }, error: null }
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, username: name || email.split('@')[0] }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        return { data: null, error: data.error || 'Registration failed' }
+      }
+
+      // Store user data and tokens
+      login(data.user, data.session?.access_token)
+      
+      return { data: { user: data.user }, error: null }
     } catch (error) {
       return { data: null, error: "Registration failed" }
     } finally {
@@ -53,7 +79,6 @@ export function useAuth() {
   const signInAsGuest = async (): Promise<AuthResponse> => {
     setLoading(true)
     try {
-      await new Promise(r => setTimeout(r, 300))
       const guestUser = { 
         id: `guest_${Date.now()}`, 
         email: "guest@contexer.dev", 
