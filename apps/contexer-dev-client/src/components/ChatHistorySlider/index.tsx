@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sidebar } from '../Sidebar';
 import classNames from 'classnames';
+import { eventEmitter } from '../AiChat/utils/EventEmitter';
 
 interface ChatHistorySliderProps {
   onChatSelect?: (uuid: string) => void;
@@ -15,21 +16,22 @@ export const ChatHistorySlider: React.FC<ChatHistorySliderProps> = ({ onChatSele
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={classNames(
-          "fixed left-4 bottom-4 z-[1000] w-8 h-8 flex items-center justify-center",
-          "rounded-md transition-all duration-200",
-          "bg-gray-800/70 hover:bg-gray-700 backdrop-blur-sm",
-          "border border-gray-600/30",
-          isOpen && "bg-gray-600"
+          "fixed right-4 top-16 z-[1000] w-10 h-10 flex items-center justify-center",
+          "rounded-xl transition-all duration-200 group",
+          "bg-gray-800/80 hover:bg-gray-700 backdrop-blur-sm",
+          "border border-gray-600/30 hover:border-gray-500/50",
+          "shadow-lg hover:shadow-xl",
+          isOpen && "bg-gray-600 scale-95"
         )}
-        title="Menu"
+        title="Chat History & Menu"
       >
         {/* Square icon like Bolt's style */}
         <svg
-          width="16"
-          height="16"
+          width="18"
+          height="18"
           viewBox="0 0 16 16"
           fill="none"
-          className="text-gray-300"
+          className="text-gray-300 group-hover:text-gray-200 transition-colors"
         >
           <rect
             x="2"
@@ -78,7 +80,12 @@ export const ChatHistorySlider: React.FC<ChatHistorySliderProps> = ({ onChatSele
         onMouseEnter={() => {}}
         onMouseLeave={() => {}}
         onChatSelect={(uuid) => {
-          onChatSelect?.(uuid);
+          // Call the provided callback if available
+          if (onChatSelect) {
+            onChatSelect(uuid);
+          }
+          // Also emit the event for other listeners
+          eventEmitter.emit("chat:select", uuid);
           setIsOpen(false);
         }}
       />
@@ -86,7 +93,7 @@ export const ChatHistorySlider: React.FC<ChatHistorySliderProps> = ({ onChatSele
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-[998]"
+          className="fixed inset-0 bg-black/20 z-[49]"
           onClick={() => setIsOpen(false)}
         />
       )}

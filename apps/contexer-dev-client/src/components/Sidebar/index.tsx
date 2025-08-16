@@ -252,7 +252,13 @@ export function Sidebar({
 
         {/* New Chat Button */}
         <button
-          onClick={() => eventEmitter.emit("chat:select", "")}
+          onClick={() => {
+            if (onChatSelect) {
+              onChatSelect("");
+            } else {
+              eventEmitter.emit("chat:select", "");
+            }
+          }}
           className="mx-3 my-2 p-2 flex items-center gap-2 text-[#000080] dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors text-[14px]"
         >
           <svg
@@ -287,7 +293,13 @@ export function Sidebar({
           {filteredHistory.map((chat) => (
             <div
               key={chat.uuid}
-              onClick={() => eventEmitter.emit("chat:select", chat.uuid)}
+              onClick={() => {
+                if (onChatSelect) {
+                  onChatSelect(chat.uuid);
+                } else {
+                  eventEmitter.emit("chat:select", chat.uuid);
+                }
+              }}
               className="group flex items-center w-full text-left px-2 py-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded text-[14px] cursor-pointer"
             >
               <span className="flex-1 truncate">
