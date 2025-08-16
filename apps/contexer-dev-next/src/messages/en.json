@@ -156,9 +156,7 @@
     "password": "Password",
     "passwordPlaceholder": "Password",
     "signInWithGithub": "Sign in with GitHub",
-    "signInWithWechat": "Sign in with WeChat",
     "loginFailed": "Login failed",
-    "wechatLoginFailed": "WeChat login failed",
     "githubLoginFailed": "GitHub login failed",
     "passwordError": "Password is incorrect"
   },
@@ -190,9 +188,9 @@
       "pro": "Pro",
       "proMax": "Pro Max"
     },
-    "wechat": {
-      "title": "WeChat Pay",
-      "subtitle": "Please scan the QR code with WeChat to complete payment",
+    "payment": {
+      "title": "Payment",
+      "subtitle": "Please complete payment to continue",
       "amount": "Payment Amount",
       "validityPeriod": "QR Code Valid For: {time}",
       "expired": "QR Code Expired",
@@ -201,7 +199,7 @@
       "refresh": "Refresh QR Code",
       "tips": {
         "title": "Tips:",
-        "scanWithWechat": "Please scan with WeChat Pay",
+        "scanToPay": "Please scan to pay",
         "refreshIfNeeded": "Click refresh if you encounter any issues",
         "autoRedirect": "Will redirect automatically after payment"
       },
@@ -222,10 +220,10 @@
     "registering": "Registering...",
     "or": "or",
     "registerWithGithub": "Register with GitHub",
-    "registerWithWechat": "Register with WeChat",
+
     "passwordsNotMatch": "Passwords do not match",
     "registrationFailed": "Registration failed",
-    "wechatRegisterFailed": "WeChat registration failed",
+
     "githubRegisterFailed": "GitHub registration failed",
     "emailAlreadyExists": "User already exists"
   },

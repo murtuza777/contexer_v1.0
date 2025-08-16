@@ -3,19 +3,18 @@ import { supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { refreshToken } = await request.json()
 
-    if (!email || !password) {
+    if (!refreshToken) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Refresh token is required' },
         { status: 400 }
       )
     }
 
-    // Sign in the user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password
+    // Refresh the session
+    const { data: authData, error: authError } = await supabase.auth.refreshSession({
+      refresh_token: refreshToken
     })
 
     if (authError) {
@@ -25,29 +24,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!authData.user || !authData.session) {
+    if (!authData.session) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { error: 'Failed to refresh session' },
         { status: 401 }
       )
     }
 
-    // Return user data and session
+    // Return new session data
     return NextResponse.json({
       user: {
-        id: authData.user.id,
-        email: authData.user.email,
-        username: authData.user.user_metadata?.username || authData.user.email?.split('@')[0],
-        avatar: authData.user.user_metadata?.avatar_url || null
+        id: authData.user?.id,
+        email: authData.user?.email,
+        username: authData.user?.user_metadata?.username || authData.user?.email?.split('@')[0],
+        avatar: authData.user?.user_metadata?.avatar_url || null
       },
       session: authData.session,
       accessToken: authData.session.access_token,
       refreshToken: authData.session.refresh_token,
-      message: 'Login successful'
+      message: 'Token refreshed successfully'
     })
 
   } catch (error) {
-    console.error('Login error:', error)
+    console.error('Token refresh error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
