@@ -40,7 +40,7 @@ export default function SignupPage({ onBack, onLogin }: { onBack: () => void; on
       <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:50px_50px] animate-grid-move" />
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 left-10 w-4 h-4 bg-blue-400/30 rotate-45 animate-float-slow" />
-        <div className="absolute bottom-20 right-20 w-6 h-6 bg-white/20 rounded-full animate-float-medium" />
+        <div className="absolute bottom-20 right-20 w-6 h-6 bg-white/30 rounded-full animate-float-medium" />
       </div>
 
       <Card className="w-full max-w-md bg-gradient-to-br from-white/15 to-white/10 backdrop-blur-xl border-white/20 animate-fade-in-up shadow-2xl shadow-blue-500/10 relative overflow-hidden">
@@ -75,7 +75,7 @@ export default function SignupPage({ onBack, onLogin }: { onBack: () => void; on
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/15 shadow-lg"
+                className="w-full px-4 py-3 bg-white/30 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/40 shadow-lg"
                 placeholder="Enter your name"
               />
             </div>
@@ -89,7 +89,7 @@ export default function SignupPage({ onBack, onLogin }: { onBack: () => void; on
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/15 shadow-lg"
+                className="w-full px-4 py-3 bg-white/30 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/40 shadow-lg"
                 placeholder="Enter your email"
               />
             </div>
@@ -103,7 +103,7 @@ export default function SignupPage({ onBack, onLogin }: { onBack: () => void; on
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/15 shadow-lg"
+                className="w-full px-4 py-3 bg-white/30 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/40 shadow-lg"
                 placeholder="Create a password"
               />
             </div>
