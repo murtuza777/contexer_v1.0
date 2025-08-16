@@ -130,8 +130,7 @@
     "themeSystem": "Follow System"
   },
   "preview": {
-    "noserver": "No server running currently",
-    "wxminiPreview": "Can open WeChat Mini Program Developer Tools for preview"
+        "noserver": "No server running currently"
   },
   "editor": {
     "editor": "Editor",
@@ -255,13 +254,13 @@
     "tech": {
       "react": "React (TypeScript & Tailwind)",
       "vue": "Vue3 (TypeScript & Tailwind)",
-      "miniprogram": "WeChat Mini Program"
+      "miniprogram": "Mini Program"
     },
     "prompts": {
       "base": "Please generate based on the uploaded design",
       "react": "React code, using TypeScript, styles using Tailwind CSS, the project should have a startup entry, and ensure the project can run, and ensure the code meets best practices and performance optimization.",
       "vue": "Vue3 code, using TypeScript and Composition API, styles using Tailwind CSS, and ensure the code meets Vue's best practices.",
-      "miniprogram": "WeChat Mini Program code, using native mini program framework, styles using WXSS, ensure compliance with mini program development specifications and best practices. Use rpx units to write this interface, if there is a status bar on the design, please remove it, pay attention to styles and width when writing mini programs"
+      "miniprogram": "Mini Program code, using native mini program framework, styles using WXSS, ensure compliance with mini program development specifications and best practices. Use rpx units to write this interface, if there is a status bar on the design, please remove it, pay attention to styles and width when writing mini programs"
     }
   },
   "update": {
