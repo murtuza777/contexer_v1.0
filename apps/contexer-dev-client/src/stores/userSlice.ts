@@ -101,9 +101,9 @@ const useUserStore = create<UserState>()(
 
         try {
           set({ isLoading: true });
-          
-          // Mock API call - replace with actual API
-          const response = await fetch('/api/user/profile', {
+
+          const baseUrl = (import.meta as any)?.env?.VITE_APP_BASE_URL || 'http://localhost:3000';
+          const response = await fetch(`${baseUrl}/api/user/profile`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -113,7 +113,7 @@ const useUserStore = create<UserState>()(
             const userData = await response.json();
             set({ user: userData });
           } else {
-            // Token might be invalid
+            // Token might be invalid/expired
             get().clearUser();
           }
         } catch (error) {
