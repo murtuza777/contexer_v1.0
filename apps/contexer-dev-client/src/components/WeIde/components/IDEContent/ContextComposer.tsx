@@ -1,6 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Save, Upload, RefreshCw, BookOpen, Code, FileText } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { contextApi, type Project } from "@/services/contextApi";
+import useUserStore from "@/stores/userSlice";
+import { convertLegacyToNewContext, convertNewToLegacyContext } from "@/types/context";
 
 interface ContextComposerProps {
   onFileSelect?: (path: string, line?: number) => void;
@@ -49,7 +52,10 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isAuthenticated, token } = useUserStore();
 
   const handleTechStackToggle = (tech: string) => {
     setContext(prev => ({
@@ -60,19 +66,88 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
     }));
   };
 
+  // Load existing project or create new one
+  useEffect(() => {
+    const loadOrCreateProject = async () => {
+      if (!isAuthenticated || !token) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Try to get existing projects
+        const projectsResponse = await contextApi.getProjects();
+        
+        if (projectsResponse.success && projectsResponse.data && projectsResponse.data.length > 0) {
+          // Use the first/most recent project
+          const project = projectsResponse.data[0];
+          setCurrentProject(project);
+          
+          // Convert backend context to legacy format for UI
+          if (project.context) {
+            const legacyContext = convertNewToLegacyContext(project.context);
+            setContext(legacyContext);
+          }
+        } else {
+          // No projects exist, will create one on first save
+          console.log("No existing projects found");
+        }
+      } catch (error) {
+        console.error("Failed to load projects:", error);
+        setError("Failed to load project data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadOrCreateProject();
+  }, [isAuthenticated, token]);
+
   const handleSave = async () => {
+    if (!isAuthenticated || !token) {
+      setError("Please log in to save your context");
+      return;
+    }
+
     setIsLoading(true);
+    setError(null);
+
     try {
-      // TODO: Implement save to Supabase API
-      console.log("Saving context:", context);
+      // Convert legacy context to new format
+      const newContext = convertLegacyToNewContext(context);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let response;
       
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 2000);
+      // Derive a safe project name (UI may contain long description)
+      const deriveName = (raw: string) => {
+        const base = (raw || '').split('\n')[0].trim();
+        if (!base) return 'New Project';
+        return base.length > 120 ? base.slice(0, 120) + '…' : base;
+      };
+
+      if (currentProject) {
+        // Update existing project
+        response = await contextApi.saveContext(currentProject.id, newContext);
+      } else {
+        // Create new project
+        response = await contextApi.createProject({
+          name: deriveName(context.appDescription),
+          description: context.appDescription?.trim() || "Created from Context Composer",
+          context: newContext
+        });
+      }
+
+      if (response.success && response.data) {
+        setCurrentProject(response.data);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+        console.log("Context saved successfully!");
+      } else {
+        setError(response.errors?.join(", ") || "Failed to save context");
+      }
     } catch (error) {
       console.error("Failed to save context:", error);
+      setError("Network error: Failed to save context");
     } finally {
       setIsLoading(false);
     }
@@ -163,6 +238,32 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-4 space-y-4">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3">
+            <div className="text-sm text-red-700 dark:text-red-300">
+              {error}
+            </div>
+          </div>
+        )}
+
+        {/* Success Display */}
+        {isSaved && (
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3">
+            <div className="text-sm text-green-700 dark:text-green-300">
+              ✅ Context saved successfully!
+            </div>
+          </div>
+        )}
+
+        {/* Authentication Warning */}
+        {!isAuthenticated && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3">
+            <div className="text-sm text-yellow-700 dark:text-yellow-300">
+              ⚠️ Please log in to save your context to the database
+            </div>
+          </div>
+        )}
         {/* App Description */}
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
