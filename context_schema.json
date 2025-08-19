@@ -1,0 +1,254 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Contexer Project Context Schema",
+  "description": "Schema for project context data in Contexer platform",
+  "type": "object",
+  "required": ["goal", "user_stories", "tech_stack"],
+  "properties": {
+    "goal": {
+      "type": "string",
+      "description": "Main goal/description of the application",
+      "minLength": 10,
+      "maxLength": 2000,
+      "example": "Build a task management app for small teams"
+    },
+    "user_stories": {
+      "type": "array",
+      "description": "List of user stories with acceptance criteria",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "acceptance_criteria", "status"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the user story",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          },
+          "description": {
+            "type": "string",
+            "description": "User story description in 'As a... I want... So that...' format",
+            "minLength": 10,
+            "maxLength": 500
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "description": "List of acceptance criteria for this user story",
+            "items": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 200
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in_progress", "complete", "blocked"],
+            "description": "Current status of the user story implementation"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"],
+            "description": "Priority level for implementation",
+            "default": "medium"
+          },
+          "estimated_effort": {
+            "type": "string",
+            "enum": ["small", "medium", "large", "extra_large"],
+            "description": "Estimated effort required",
+            "default": "medium"
+          }
+        }
+      }
+    },
+    "tech_stack": {
+      "type": "array",
+      "description": "List of technologies to be used",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "React",
+          "Next.js",
+          "Vue.js",
+          "Angular",
+          "Node.js",
+          "Express",
+          "FastAPI",
+          "Django",
+          "Supabase",
+          "PostgreSQL",
+          "MongoDB",
+          "TypeScript",
+          "JavaScript",
+          "Python",
+          "Tailwind CSS",
+          "Material-UI",
+          "Chakra UI",
+          "Redux",
+          "Zustand",
+          "React Query",
+          "GraphQL",
+          "REST API",
+          "WebSocket",
+          "PWA",
+          "Docker",
+          "AWS",
+          "Vercel",
+          "Netlify"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Non-functional requirements and constraints",
+      "properties": {
+        "performance": {
+          "type": "object",
+          "properties": {
+            "max_load_time": {
+              "type": "number",
+              "description": "Maximum page load time in seconds",
+              "minimum": 0.1,
+              "maximum": 10
+            },
+            "target_users": {
+              "type": "number",
+              "description": "Expected concurrent users",
+              "minimum": 1
+            }
+          }
+        },
+        "browser_support": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Chrome", "Firefox", "Safari", "Edge", "Mobile Chrome", "Mobile Safari"]
+          }
+        },
+        "accessibility": {
+          "type": "object",
+          "properties": {
+            "wcag_level": {
+              "type": "string",
+              "enum": ["A", "AA", "AAA"],
+              "description": "WCAG compliance level required"
+            },
+            "screen_reader_support": {
+              "type": "boolean",
+              "description": "Whether screen reader support is required"
+            }
+          }
+        },
+        "security": {
+          "type": "object",
+          "properties": {
+            "authentication_required": {
+              "type": "boolean",
+              "description": "Whether user authentication is required"
+            },
+            "data_encryption": {
+              "type": "boolean",
+              "description": "Whether data encryption is required"
+            },
+            "gdpr_compliance": {
+              "type": "boolean",
+              "description": "Whether GDPR compliance is required"
+            }
+          }
+        }
+      }
+    },
+    "readme_content": {
+      "type": "string",
+      "description": "Content from uploaded README.md file",
+      "maxLength": 50000
+    },
+    "additional_notes": {
+      "type": "string",
+      "description": "Any additional notes or special requirements",
+      "maxLength": 5000
+    },
+    "project_type": {
+      "type": "string",
+      "enum": ["web_app", "mobile_app", "desktop_app", "api", "library", "extension"],
+      "description": "Type of project being built",
+      "default": "web_app"
+    },
+    "deployment_target": {
+      "type": "string",
+      "enum": ["vercel", "netlify", "aws", "azure", "gcp", "heroku", "self_hosted"],
+      "description": "Target deployment platform"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Context schema version",
+      "default": "1.0.0"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this context was created"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this context was last updated"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "goal": "Build a task management application for small development teams with real-time collaboration features",
+      "user_stories": [
+        {
+          "id": "user_auth",
+          "description": "As a user, I want to sign up and log in so that I can access my personal task dashboard",
+          "acceptance_criteria": [
+            "User can register with email and password",
+            "User can log in with valid credentials",
+            "User stays logged in between sessions",
+            "User can log out securely"
+          ],
+          "status": "pending",
+          "priority": "high",
+          "estimated_effort": "medium"
+        },
+        {
+          "id": "task_creation",
+          "description": "As a team member, I want to create tasks with descriptions and due dates so that I can track my work",
+          "acceptance_criteria": [
+            "User can create a new task with title and description",
+            "User can set due dates for tasks",
+            "User can assign priority levels to tasks",
+            "Tasks are saved and persist between sessions"
+          ],
+          "status": "pending",
+          "priority": "high",
+          "estimated_effort": "large"
+        }
+      ],
+      "tech_stack": ["React", "Next.js", "TypeScript", "Supabase", "Tailwind CSS"],
+      "constraints": {
+        "performance": {
+          "max_load_time": 3,
+          "target_users": 100
+        },
+        "browser_support": ["Chrome", "Firefox", "Safari"],
+        "accessibility": {
+          "wcag_level": "AA",
+          "screen_reader_support": true
+        },
+        "security": {
+          "authentication_required": true,
+          "data_encryption": true,
+          "gdpr_compliance": true
+        }
+      },
+      "project_type": "web_app",
+      "deployment_target": "vercel",
+      "version": "1.0.0"
+    }
+  ]
+}
