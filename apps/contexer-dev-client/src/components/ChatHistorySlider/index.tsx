@@ -12,63 +12,30 @@ export const ChatHistorySlider: React.FC<ChatHistorySliderProps> = ({ onChatSele
 
   return (
     <>
-      {/* Trigger Button - Square icon like Bolt's bottom-left */}
+      {/* Trigger Button - Floating action button at bottom-right */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={classNames(
-          "fixed right-4 top-16 z-[1000] w-10 h-10 flex items-center justify-center",
-          "rounded-xl transition-all duration-200 group",
-          "bg-gray-800/80 hover:bg-gray-700 backdrop-blur-sm",
+          "fixed right-6 bottom-6 z-[1000] w-12 h-12 flex items-center justify-center",
+          "rounded-full transition-all duration-200 group",
+          "bg-gray-800/90 hover:bg-gray-700 backdrop-blur-sm",
           "border border-gray-600/30 hover:border-gray-500/50",
           "shadow-lg hover:shadow-xl",
           isOpen && "bg-gray-600 scale-95"
         )}
-        title="Chat History & Menu"
+        title="Chat History"
+        aria-label="Open chat history"
       >
-        {/* Square icon like Bolt's style */}
+        {/* Chat/history icon */}
         <svg
-          width="18"
-          height="18"
-          viewBox="0 0 16 16"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
           fill="none"
           className="text-gray-300 group-hover:text-gray-200 transition-colors"
         >
-          <rect
-            x="2"
-            y="2"
-            width="5"
-            height="5"
-            rx="1"
-            fill="currentColor"
-            opacity="0.8"
-          />
-          <rect
-            x="9"
-            y="2"
-            width="5"
-            height="5"
-            rx="1"
-            fill="currentColor"
-            opacity="0.8"
-          />
-          <rect
-            x="2"
-            y="9"
-            width="5"
-            height="5"
-            rx="1"
-            fill="currentColor"
-            opacity="0.8"
-          />
-          <rect
-            x="9"
-            y="9"
-            width="5"
-            height="5"
-            rx="1"
-            fill="currentColor"
-            opacity="0.8"
-          />
+          <path d="M21 12a9 9 0 1 0-3.34 6.97L21 21l-2.03-3.34A8.96 8.96 0 0 0 21 12Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+          <path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
