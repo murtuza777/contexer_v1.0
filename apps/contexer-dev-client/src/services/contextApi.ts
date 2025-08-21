@@ -60,6 +60,36 @@ class ContextApiService {
     }
   }
 
+  // Process README content (markdown) and return structured context + HTML
+  async processReadme(content: string): Promise<ApiResponse<{ html: string; context: Partial<ProjectContext>; sections: { title: string; start: number; end: number }[] }>> {
+    try {
+      const response = await fetch(`${API_BASE}/api/readme/process`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ content })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        return {
+          success: false,
+          errors: errorData.errors || [errorData.message || 'Failed to process README']
+        };
+      }
+      
+      const data = await response.json();
+      return {
+        success: true,
+        data: data
+      };
+    } catch (error) {
+      return {
+        success: false,
+        errors: ['Network error: Failed to process README']
+      };
+    }
+  }
+
   // Get all projects for current user
   async getProjects(): Promise<ApiResponse<Project[]>> {
     try {

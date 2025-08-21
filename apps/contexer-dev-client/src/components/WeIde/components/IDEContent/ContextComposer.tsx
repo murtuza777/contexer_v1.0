@@ -4,6 +4,8 @@ import { cn } from "@/utils/cn";
 import { contextApi, type Project } from "@/services/contextApi";
 import useUserStore from "@/stores/userSlice";
 import { convertLegacyToNewContext, convertNewToLegacyContext } from "@/types/context";
+import { recommendTechFromText, type DetectionOutcome } from "@/utils/nlp/techStackDetector";
+import { parseAndEnhanceUserStories } from "@/utils/nlp/userStoryParser";
 
 interface ContextComposerProps {
   onFileSelect?: (path: string, line?: number) => void;
@@ -56,14 +58,27 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isAuthenticated, token } = useUserStore();
+  const [detected, setDetected] = useState<DetectionOutcome | null>(null);
+  const [readmePreview, setReadmePreview] = useState<string>("");
+  const [isProcessingReadme, setIsProcessingReadme] = useState(false);
+  const readmeDebounceRef = useRef<number | null>(null);
 
   const handleTechStackToggle = (tech: string) => {
-    setContext(prev => ({
-      ...prev,
-      techStack: prev.techStack.includes(tech)
+    console.log("🔧 [Tech Stack Toggle] Toggling tech:", tech);
+    setContext(prev => {
+      const isCurrentlySelected = prev.techStack.includes(tech);
+      const newTechStack = isCurrentlySelected
         ? prev.techStack.filter(t => t !== tech)
-        : [...prev.techStack, tech]
-    }));
+        : [...prev.techStack, tech];
+      
+      console.log("🔧 [Tech Stack Toggle] Was selected:", isCurrentlySelected);
+      console.log("🔧 [Tech Stack Toggle] New tech stack:", newTechStack);
+      
+      return {
+        ...prev,
+        techStack: newTechStack
+      };
+    });
   };
 
   // Load existing project or create new one
@@ -71,37 +86,77 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
     const loadOrCreateProject = async () => {
       if (!isAuthenticated || !token) return;
 
+      console.log("🔄 [Project Loading] Starting project load...");
       setIsLoading(true);
       setError(null);
 
       try {
         // Try to get existing projects
+        console.log("🔄 [Project Loading] Fetching projects...");
         const projectsResponse = await contextApi.getProjects();
+        console.log("🔄 [Project Loading] Projects response:", projectsResponse);
         
         if (projectsResponse.success && projectsResponse.data && projectsResponse.data.length > 0) {
           // Use the first/most recent project
           const project = projectsResponse.data[0];
+          console.log("🔄 [Project Loading] Using project:", project);
           setCurrentProject(project);
           
           // Convert backend context to legacy format for UI
           if (project.context) {
+            console.log("🔄 [Project Loading] Converting context format...");
             const legacyContext = convertNewToLegacyContext(project.context);
+            console.log("🔄 [Project Loading] Converted context:", legacyContext);
             setContext(legacyContext);
           }
         } else {
           // No projects exist, will create one on first save
-          console.log("No existing projects found");
+          console.log("🔄 [Project Loading] No existing projects found");
         }
       } catch (error) {
-        console.error("Failed to load projects:", error);
+        console.error("❌ [Project Loading] Failed to load projects:", error);
         setError("Failed to load project data");
       } finally {
         setIsLoading(false);
+        console.log("🔄 [Project Loading] Project loading complete");
       }
     };
 
     loadOrCreateProject();
   }, [isAuthenticated, token]);
+
+  // Auto-detect tech stack from description and suggest/apply
+  useEffect(() => {
+    const text = context.appDescription || "";
+    console.log("🔍 [Tech Stack Detection] Analyzing text:", text);
+    
+    const outcome = recommendTechFromText(text, 0.3);
+    console.log("🔍 [Tech Stack Detection] Detection outcome:", outcome);
+    
+    setDetected(outcome);
+    
+    // Auto-apply if high confidence and not already selected
+    if (outcome.detected && outcome.detected.score >= 0.6) {
+      const canonical = outcome.recommended;
+      console.log("🔍 [Tech Stack Detection] Auto-applying high confidence tech:", canonical, "score:", outcome.detected.score);
+      setContext(prev => (
+        prev.techStack.includes(canonical)
+          ? prev
+          : { ...prev, techStack: [...prev.techStack, canonical] }
+      ));
+    }
+  }, [context.appDescription]);
+
+  const applyRecommendedTech = () => {
+    if (!detected) return;
+    const canonical = detected.recommended;
+    console.log("🔍 [Tech Stack Detection] Manually applying recommended tech:", canonical);
+    setContext(prev => (
+      prev.techStack.includes(canonical)
+        ? prev
+        : { ...prev, techStack: [...prev.techStack, canonical] }
+    ));
+  };
 
   const handleSave = async () => {
     if (!isAuthenticated || !token) {
@@ -109,12 +164,16 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
       return;
     }
 
+    console.log("💾 [Save] Starting save process...");
+    console.log("💾 [Save] Current context state:", context);
+    
     setIsLoading(true);
     setError(null);
 
     try {
       // Convert legacy context to new format
       const newContext = convertLegacyToNewContext(context);
+      console.log("💾 [Save] Converted to new format:", newContext);
       
       let response;
       
@@ -126,27 +185,33 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
       };
 
       if (currentProject) {
+        console.log("💾 [Save] Updating existing project:", currentProject.id);
         // Update existing project
         response = await contextApi.saveContext(currentProject.id, newContext);
       } else {
+        const projectName = deriveName(context.appDescription);
+        console.log("💾 [Save] Creating new project with name:", projectName);
         // Create new project
         response = await contextApi.createProject({
-          name: deriveName(context.appDescription),
+          name: projectName,
           description: context.appDescription?.trim() || "Created from Context Composer",
           context: newContext
         });
       }
 
+      console.log("💾 [Save] API response:", response);
+
       if (response.success && response.data) {
         setCurrentProject(response.data);
         setIsSaved(true);
         setTimeout(() => setIsSaved(false), 2000);
-        console.log("Context saved successfully!");
+        console.log("✅ [Save] Context saved successfully!");
       } else {
+        console.error("❌ [Save] Failed to save:", response.errors);
         setError(response.errors?.join(", ") || "Failed to save context");
       }
     } catch (error) {
-      console.error("Failed to save context:", error);
+      console.error("❌ [Save] Exception during save:", error);
       setError("Network error: Failed to save context");
     } finally {
       setIsLoading(false);
@@ -165,29 +230,93 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
           ...prev,
           readme: content
         }));
+        processReadmeContent(content);
       };
       reader.readAsText(file);
     }
   };
 
+  const processReadmeContent = async (content: string) => {
+    if (!content || content.trim().length === 0) return;
+    
+    console.log("📖 [README Processing] Starting README processing...");
+    console.log("📖 [README Processing] Content length:", content.length);
+    console.log("📖 [README Processing] Content preview:", content.substring(0, 200) + "...");
+    
+    try {
+      setIsProcessingReadme(true);
+      console.log("📖 [README Processing] Calling API...");
+      
+      const res = await contextApi.processReadme(content);
+      console.log("📖 [README Processing] API response:", res);
+      
+      if (res.success && res.data) {
+        const { html, context: extracted } = res.data as any;
+        console.log("📖 [README Processing] Extracted context:", extracted);
+        console.log("📖 [README Processing] HTML preview length:", html?.length || 0);
+        
+        setReadmePreview(html);
+        
+        // Merge description and stories conservatively (no tech suggestions)
+        if (extracted) {
+          console.log("📖 [README Processing] Merging extracted data...");
+          console.log("📖 [README Processing] Goal:", extracted.goal);
+          console.log("📖 [README Processing] Tech stack:", extracted.tech_stack);
+          console.log("📖 [README Processing] User stories:", extracted.user_stories);
+          
+          setContext(prev => {
+            const updated = {
+              ...prev,
+              appDescription: extracted.goal || prev.appDescription,
+              techStack: prev.techStack,
+              userStories: prev.userStories && prev.userStories.trim().length > 0
+                ? prev.userStories
+                : (extracted.user_stories || []).map((s: any) => `- ${s.description}`).join('\n')
+            };
+            console.log("📖 [README Processing] Updated context:", updated);
+            return updated;
+          });
+        } else {
+          console.warn("📖 [README Processing] No extracted context found in response");
+        }
+      } else {
+        console.error("❌ [README Processing] API failed:", res.errors);
+        setError(res.errors?.join(', ') || 'Failed to process README');
+      }
+    } catch (e) {
+      console.error("❌ [README Processing] Exception:", e);
+      setError('Failed to process README');
+    } finally {
+      setIsProcessingReadme(false);
+      console.log("📖 [README Processing] Processing complete");
+    }
+  };
+
   const generateFromProject = () => {
+    console.log("🧪 [Test] Starting test generation...");
     setIsLoading(true);
     try {
       // TODO: Implement auto-detection from current project files
-      console.log("Generating context from current project...");
+      console.log("🧪 [Test] Simulating project analysis...");
       
       // Simulate analysis
       setTimeout(() => {
-        setContext(prev => ({
-          ...prev,
+        const testContext = {
           appDescription: "Web application generated from project analysis",
           techStack: ["React", "TypeScript", "Next.js"],
           userStories: "- User can navigate the application\n- User can interact with components\n- User can view data"
+        };
+        
+        console.log("🧪 [Test] Setting test context:", testContext);
+        setContext(prev => ({
+          ...prev,
+          ...testContext
         }));
         setIsLoading(false);
+        console.log("🧪 [Test] Test generation complete");
       }, 2000);
     } catch (error) {
-      console.error("Failed to generate context:", error);
+      console.error("❌ [Test] Failed to generate test context:", error);
       setIsLoading(false);
     }
   };
@@ -203,6 +332,30 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
           </span>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => {
+              console.log("🧪 [Test] Running comprehensive test...");
+              console.log("🧪 [Test] Current context:", context);
+              console.log("🧪 [Test] Current detected tech:", detected);
+              console.log("🧪 [Test] Current readme preview:", readmePreview);
+              
+              // Test tech stack detection
+              const testText = "I want to build a Next.js 15 app with React 18 and TypeScript";
+              console.log("🧪 [Test] Testing tech detection with:", testText);
+              const testOutcome = recommendTechFromText(testText, 0.3);
+              console.log("🧪 [Test] Tech detection result:", testOutcome);
+              
+              // Test user story parsing
+              const testStories = "As a user, I want to create tasks so that I can organize my work";
+              console.log("🧪 [Test] Testing story parsing with:", testStories);
+              const parsedStories = parseAndEnhanceUserStories(testStories);
+              console.log("🧪 [Test] Story parsing result:", parsedStories);
+            }}
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-[#2c2c2c] text-gray-600 dark:text-gray-400"
+            title="Test NLP Features"
+          >
+            🧪
+          </button>
           <button
             onClick={generateFromProject}
             disabled={isLoading}
@@ -286,6 +439,26 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
             <Code className="w-4 h-4" />
             Tech Stack
           </label>
+          {detected && (
+            <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+              <div>
+                Detected: <span className="font-medium">{detected.recommended}</span>
+                {detected.detected?.version && (
+                  <span className="ml-1 text-gray-500">v{detected.detected.version}</span>
+                )}
+                {typeof detected.detected?.score === 'number' && (
+                  <span className="ml-2">({Math.round((detected.detected.score || 0) * 100)}%)</span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={applyRecommendedTech}
+                className="px-2 py-1 rounded border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-[#2c2c2c]"
+              >
+                Apply
+              </button>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             {TECH_STACKS.map((tech) => (
               <button
@@ -317,6 +490,45 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
                      bg-white dark:bg-[#1a1a1c] text-gray-900 dark:text-gray-100
                      focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
+                     {/* Parsed stories preview */}
+           {(() => {
+             const stories = parseAndEnhanceUserStories(context.userStories || "");
+             console.log("📝 [User Story Parser] Parsed stories:", stories);
+             if (!stories || stories.length === 0) return null;
+             return (
+              <div className="mt-2 border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-[#1f1f22]">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Parsed {stories.length} stor{stories.length === 1 ? 'y' : 'ies'}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const bulletText = stories.map(s => `- ${s.description}`).join("\n");
+                      setContext(prev => ({ ...prev, userStories: bulletText }));
+                    }}
+                    className="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-[#2c2c2c]"
+                  >
+                    Insert into text
+                  </button>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {stories.map((s, i) => (
+                    <div key={s.id || i} className="text-xs">
+                      <div className="font-medium text-gray-800 dark:text-gray-200">{s.description}</div>
+                      {s.acceptance_criteria?.length > 0 && (
+                        <ul className="list-disc ml-5 mt-1 text-gray-700 dark:text-gray-300">
+                          {s.acceptance_criteria.slice(0, 5).map((c, idx) => (
+                            <li key={idx}>{c}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* README Content */}
@@ -324,14 +536,37 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             README Content
           </label>
+          {/* Auto-process on paste with debounce for UX */}
           <textarea
             value={context.readme}
-            onChange={(e) => setContext(prev => ({ ...prev, readme: e.target.value }))}
+            onChange={(e) => {
+              const val = e.target.value;
+              setContext(prev => ({ ...prev, readme: val }));
+              if (readmeDebounceRef.current) {
+                window.clearTimeout(readmeDebounceRef.current);
+              }
+              readmeDebounceRef.current = window.setTimeout(() => {
+                if (val && val.trim().length > 0) {
+                  console.log("📖 [README Processing] Debounced auto-process on paste/input");
+                  processReadmeContent(val);
+                }
+              }, 600);
+            }}
             placeholder="Paste or upload your README.md content here..."
             className="w-full h-32 p-3 text-sm border border-gray-200 dark:border-gray-600 rounded-lg 
                      bg-white dark:bg-[#1a1a1c] text-gray-900 dark:text-gray-100
                      focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
+          {/* Removed README tech suggestions UI */}
+          {readmePreview && (
+            <span className="text-xs text-gray-600 dark:text-gray-400">Preview generated below</span>
+          )}
+          {readmePreview && (
+            <div className="mt-2 border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-[#1f1f22]">
+              <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">README Preview</div>
+              <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: readmePreview }} />
+            </div>
+          )}
         </div>
 
         {/* Constraints */}
