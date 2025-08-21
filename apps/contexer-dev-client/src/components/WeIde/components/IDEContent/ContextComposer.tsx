@@ -64,15 +64,11 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
   const readmeDebounceRef = useRef<number | null>(null);
 
   const handleTechStackToggle = (tech: string) => {
-    console.log("🔧 [Tech Stack Toggle] Toggling tech:", tech);
     setContext(prev => {
       const isCurrentlySelected = prev.techStack.includes(tech);
       const newTechStack = isCurrentlySelected
         ? prev.techStack.filter(t => t !== tech)
         : [...prev.techStack, tech];
-      
-      console.log("🔧 [Tech Stack Toggle] Was selected:", isCurrentlySelected);
-      console.log("🔧 [Tech Stack Toggle] New tech stack:", newTechStack);
       
       return {
         ...prev,
@@ -86,39 +82,28 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
     const loadOrCreateProject = async () => {
       if (!isAuthenticated || !token) return;
 
-      console.log("🔄 [Project Loading] Starting project load...");
       setIsLoading(true);
       setError(null);
 
       try {
         // Try to get existing projects
-        console.log("🔄 [Project Loading] Fetching projects...");
         const projectsResponse = await contextApi.getProjects();
-        console.log("🔄 [Project Loading] Projects response:", projectsResponse);
         
         if (projectsResponse.success && projectsResponse.data && projectsResponse.data.length > 0) {
           // Use the first/most recent project
           const project = projectsResponse.data[0];
-          console.log("🔄 [Project Loading] Using project:", project);
           setCurrentProject(project);
           
           // Convert backend context to legacy format for UI
           if (project.context) {
-            console.log("🔄 [Project Loading] Converting context format...");
             const legacyContext = convertNewToLegacyContext(project.context);
-            console.log("🔄 [Project Loading] Converted context:", legacyContext);
             setContext(legacyContext);
           }
-        } else {
-          // No projects exist, will create one on first save
-          console.log("🔄 [Project Loading] No existing projects found");
         }
       } catch (error) {
-        console.error("❌ [Project Loading] Failed to load projects:", error);
         setError("Failed to load project data");
       } finally {
         setIsLoading(false);
-        console.log("🔄 [Project Loading] Project loading complete");
       }
     };
 
@@ -128,17 +113,14 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
   // Auto-detect tech stack from description and suggest/apply
   useEffect(() => {
     const text = context.appDescription || "";
-    console.log("🔍 [Tech Stack Detection] Analyzing text:", text);
     
     const outcome = recommendTechFromText(text, 0.3);
-    console.log("🔍 [Tech Stack Detection] Detection outcome:", outcome);
     
     setDetected(outcome);
     
     // Auto-apply if high confidence and not already selected
     if (outcome.detected && outcome.detected.score >= 0.6) {
       const canonical = outcome.recommended;
-      console.log("🔍 [Tech Stack Detection] Auto-applying high confidence tech:", canonical, "score:", outcome.detected.score);
       setContext(prev => (
         prev.techStack.includes(canonical)
           ? prev
@@ -150,7 +132,6 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
   const applyRecommendedTech = () => {
     if (!detected) return;
     const canonical = detected.recommended;
-    console.log("🔍 [Tech Stack Detection] Manually applying recommended tech:", canonical);
     setContext(prev => (
       prev.techStack.includes(canonical)
         ? prev
@@ -164,16 +145,12 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
       return;
     }
 
-    console.log("💾 [Save] Starting save process...");
-    console.log("💾 [Save] Current context state:", context);
-    
     setIsLoading(true);
     setError(null);
 
     try {
       // Convert legacy context to new format
       const newContext = convertLegacyToNewContext(context);
-      console.log("💾 [Save] Converted to new format:", newContext);
       
       let response;
       
@@ -185,12 +162,10 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
       };
 
       if (currentProject) {
-        console.log("💾 [Save] Updating existing project:", currentProject.id);
         // Update existing project
         response = await contextApi.saveContext(currentProject.id, newContext);
       } else {
         const projectName = deriveName(context.appDescription);
-        console.log("💾 [Save] Creating new project with name:", projectName);
         // Create new project
         response = await contextApi.createProject({
           name: projectName,
@@ -199,19 +174,14 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
         });
       }
 
-      console.log("💾 [Save] API response:", response);
-
       if (response.success && response.data) {
         setCurrentProject(response.data);
         setIsSaved(true);
         setTimeout(() => setIsSaved(false), 2000);
-        console.log("✅ [Save] Context saved successfully!");
       } else {
-        console.error("❌ [Save] Failed to save:", response.errors);
         setError(response.errors?.join(", ") || "Failed to save context");
       }
     } catch (error) {
-      console.error("❌ [Save] Exception during save:", error);
       setError("Network error: Failed to save context");
     } finally {
       setIsLoading(false);
@@ -239,31 +209,18 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
   const processReadmeContent = async (content: string) => {
     if (!content || content.trim().length === 0) return;
     
-    console.log("📖 [README Processing] Starting README processing...");
-    console.log("📖 [README Processing] Content length:", content.length);
-    console.log("📖 [README Processing] Content preview:", content.substring(0, 200) + "...");
-    
     try {
       setIsProcessingReadme(true);
-      console.log("📖 [README Processing] Calling API...");
       
       const res = await contextApi.processReadme(content);
-      console.log("📖 [README Processing] API response:", res);
       
       if (res.success && res.data) {
         const { html, context: extracted } = res.data as any;
-        console.log("📖 [README Processing] Extracted context:", extracted);
-        console.log("📖 [README Processing] HTML preview length:", html?.length || 0);
         
         setReadmePreview(html);
         
         // Merge description and stories conservatively (no tech suggestions)
         if (extracted) {
-          console.log("📖 [README Processing] Merging extracted data...");
-          console.log("📖 [README Processing] Goal:", extracted.goal);
-          console.log("📖 [README Processing] Tech stack:", extracted.tech_stack);
-          console.log("📖 [README Processing] User stories:", extracted.user_stories);
-          
           setContext(prev => {
             const updated = {
               ...prev,
@@ -273,31 +230,23 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
                 ? prev.userStories
                 : (extracted.user_stories || []).map((s: any) => `- ${s.description}`).join('\n')
             };
-            console.log("📖 [README Processing] Updated context:", updated);
             return updated;
           });
-        } else {
-          console.warn("📖 [README Processing] No extracted context found in response");
         }
       } else {
-        console.error("❌ [README Processing] API failed:", res.errors);
         setError(res.errors?.join(', ') || 'Failed to process README');
       }
     } catch (e) {
-      console.error("❌ [README Processing] Exception:", e);
       setError('Failed to process README');
     } finally {
       setIsProcessingReadme(false);
-      console.log("📖 [README Processing] Processing complete");
     }
   };
 
   const generateFromProject = () => {
-    console.log("🧪 [Test] Starting test generation...");
     setIsLoading(true);
     try {
       // TODO: Implement auto-detection from current project files
-      console.log("🧪 [Test] Simulating project analysis...");
       
       // Simulate analysis
       setTimeout(() => {
@@ -307,16 +256,13 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
           userStories: "- User can navigate the application\n- User can interact with components\n- User can view data"
         };
         
-        console.log("🧪 [Test] Setting test context:", testContext);
         setContext(prev => ({
           ...prev,
           ...testContext
         }));
         setIsLoading(false);
-        console.log("🧪 [Test] Test generation complete");
       }, 2000);
     } catch (error) {
-      console.error("❌ [Test] Failed to generate test context:", error);
       setIsLoading(false);
     }
   };
@@ -332,30 +278,6 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => {
-              console.log("🧪 [Test] Running comprehensive test...");
-              console.log("🧪 [Test] Current context:", context);
-              console.log("🧪 [Test] Current detected tech:", detected);
-              console.log("🧪 [Test] Current readme preview:", readmePreview);
-              
-              // Test tech stack detection
-              const testText = "I want to build a Next.js 15 app with React 18 and TypeScript";
-              console.log("🧪 [Test] Testing tech detection with:", testText);
-              const testOutcome = recommendTechFromText(testText, 0.3);
-              console.log("🧪 [Test] Tech detection result:", testOutcome);
-              
-              // Test user story parsing
-              const testStories = "As a user, I want to create tasks so that I can organize my work";
-              console.log("🧪 [Test] Testing story parsing with:", testStories);
-              const parsedStories = parseAndEnhanceUserStories(testStories);
-              console.log("🧪 [Test] Story parsing result:", parsedStories);
-            }}
-            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-[#2c2c2c] text-gray-600 dark:text-gray-400"
-            title="Test NLP Features"
-          >
-            🧪
-          </button>
           <button
             onClick={generateFromProject}
             disabled={isLoading}
@@ -493,7 +415,6 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
                      {/* Parsed stories preview */}
            {(() => {
              const stories = parseAndEnhanceUserStories(context.userStories || "");
-             console.log("📝 [User Story Parser] Parsed stories:", stories);
              if (!stories || stories.length === 0) return null;
              return (
               <div className="mt-2 border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-[#1f1f22]">
@@ -547,7 +468,6 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
               }
               readmeDebounceRef.current = window.setTimeout(() => {
                 if (val && val.trim().length > 0) {
-                  console.log("📖 [README Processing] Debounced auto-process on paste/input");
                   processReadmeContent(val);
                 }
               }, 600);
