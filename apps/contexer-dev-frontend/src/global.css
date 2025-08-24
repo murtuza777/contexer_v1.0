@@ -1,0 +1,416 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Futuristic Tech Theme - Cyberpunk Aesthetic */
+@layer base {
+  :root {
+    --neon-green: #00ffff;
+    --neon-blue: #00d4ff;
+    --neon-cyan: #00ffff;
+    --dark-bg: #0a0a0a;
+    --darker-bg: #050505;
+    --card-bg: #111111;
+    --border-glow: #00ffff;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --accent-glow: #00ffff;
+  }
+}
+
+/* Futuristic Animations */
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--neon-green), 0 0 10px var(--neon-green), 0 0 15px var(--neon-green);
+  }
+  50% {
+    box-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green), 0 0 30px var(--neon-green);
+  }
+}
+
+@keyframes neon-blue-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue), 0 0 15px var(--neon-blue);
+  }
+  50% {
+    box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue), 0 0 30px var(--neon-blue);
+  }
+}
+
+@keyframes neon-cyan-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan), 0 0 15px var(--neon-cyan);
+  }
+  50% {
+    box-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan), 0 0 30px var(--neon-cyan);
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes glitch {
+  0%, 100% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(-2px, -2px);
+  }
+  60% {
+    transform: translate(2px, 2px);
+  }
+  80% {
+    transform: translate(2px, -2px);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes enhanced-pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes float-medium {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@keyframes float-fast {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes gradient-x-reverse {
+  0%, 100% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Horizontal scan for chatbar */
+@keyframes scan {
+  0% {
+    transform: translateX(-50%);
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0%);
+    opacity: 0.7;
+  }
+}
+
+@keyframes grid-move {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+}
+
+/* Utility Classes */
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-enhanced-pulse {
+  animation: enhanced-pulse 4s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 3s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium 2.5s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: float-fast 2s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+.animate-gradient-x {
+  animation: gradient-x 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+.animate-gradient-x-reverse {
+  animation: gradient-x-reverse 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+.animate-grid-move {
+  animation: grid-move 20s linear infinite;
+}
+
+/* Futuristic Button Styles */
+.btn-futuristic {
+  @apply relative overflow-hidden bg-gradient-to-r from-neon-green to-neon-blue text-black font-semibold px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg;
+  background: linear-gradient(45deg, var(--neon-green), var(--neon-blue));
+}
+
+.btn-futuristic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s;
+}
+
+.btn-futuristic:hover::before {
+  left: 100%;
+}
+
+.btn-futuristic-secondary {
+  @apply relative overflow-hidden bg-transparent border-2 border-neon-green text-neon-green font-semibold px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 hover:bg-neon-green hover:text-black;
+}
+
+.btn-futuristic-secondary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-futuristic-secondary:hover::before {
+  left: 100%;
+}
+
+/* Futuristic Input Styles */
+.input-futuristic {
+  @apply bg-dark-bg border-2 border-gray-700 text-white placeholder-gray-400 rounded-lg px-4 py-3 transition-all duration-300 focus:border-neon-green focus:ring-2 focus:ring-neon-green/20 focus:outline-none;
+}
+
+.input-futuristic:focus {
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+/* Futuristic Card Styles */
+.card-futuristic {
+  @apply bg-card-bg border border-gray-800 rounded-lg p-6 transition-all duration-300 hover:border-neon-green/50 hover:shadow-lg hover:shadow-neon-green/10;
+}
+
+/* Neon Text Effects */
+.text-neon-green {
+  color: var(--neon-green);
+}
+
+.text-neon-blue {
+  color: var(--neon-blue);
+}
+
+.text-neon-cyan {
+  color: var(--neon-cyan);
+}
+
+/* Glowing Borders */
+.border-glow-green {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
+}
+
+.border-glow-blue {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+/* Scan Line Effect */
+.scan-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+  animation: scan-line 2s linear infinite;
+}
+
+/* Glitch Effect */
+.glitch {
+  animation: glitch 0.3s infinite;
+}
+
+/* Modern Auth Form Animations */
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Navy blue color variants */
+.text-navy-900 {
+  color: #1e293b;
+}
+
+.text-navy-800 {
+  color: #334155;
+}
+
+.text-navy-600 {
+  color: #475569;
+}
+
+/* Modern animation delays */
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Global cursor styles */
+input, textarea, [contenteditable="true"] {
+  caret-color: var(--neon-cyan) !important;
+}
+
+.CodeMirror-cursor {
+   border-left: 2px solid var(--neon-cyan) !important;
+}
+
+/* Dark mode cursor styles */
+@media (prefers-color-scheme: dark) {
+  input, textarea, [contenteditable="true"] {
+    caret-color: var(--neon-cyan);
+  }
+}
+
+/* If using Tailwind's dark class for dark mode */
+.dark input,
+.dark textarea,
+.dark [contenteditable="true"] {
+  caret-color: var(--neon-cyan);
+}
+
+/* Landing page animations */
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-float-slow {
+  animation: float-slow 3s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium 2.5s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: float-fast 2s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+.animate-gradient-x {
+  animation: gradient-x 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+.animate-gradient-x-reverse {
+  animation: gradient-x-reverse 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+.animate-grid-move {
+  animation: grid-move 20s linear infinite;
+} 

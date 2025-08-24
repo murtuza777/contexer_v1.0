@@ -1,0 +1,185 @@
+/* Modern Tech-Oriented Animations */
+
+/* Glowing effects */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(6, 182, 212, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.6), 0 0 30px rgba(6, 182, 212, 0.4);
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes matrix-rain {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes typing-dots {
+  0%, 20% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.2); opacity: 1; }
+  80%, 100% { transform: scale(1); opacity: 0.3; }
+}
+
+@keyframes scan-line {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes hologram-flicker {
+  0%, 100% { 
+    opacity: 1; 
+    filter: hue-rotate(0deg);
+  }
+  25% { 
+    opacity: 0.9; 
+    filter: hue-rotate(90deg);
+  }
+  50% { 
+    opacity: 0.95; 
+    filter: hue-rotate(180deg);
+  }
+  75% { 
+    opacity: 0.9; 
+    filter: hue-rotate(270deg);
+  }
+}
+
+@keyframes data-stream {
+  0% { transform: translateY(0) scaleY(1); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-20px) scaleY(0.8); opacity: 0; }
+}
+
+/* Chat-specific animations */
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-neon-flicker {
+  animation: neon-flicker 3s ease-in-out infinite;
+}
+
+.animate-typing-dots {
+  animation: typing-dots 1.4s ease-in-out infinite;
+}
+
+.animate-scan-line {
+  animation: scan-line 2s linear infinite;
+}
+
+.animate-hologram {
+  animation: hologram-flicker 4s ease-in-out infinite;
+}
+
+.animate-data-stream {
+  animation: data-stream 3s ease-out infinite;
+}
+
+/* Hover effects */
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, 
+    rgba(148, 163, 184, 0.1) 25%, 
+    rgba(148, 163, 184, 0.3) 50%, 
+    rgba(148, 163, 184, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Particle effects */
+.particle-field::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, rgba(6, 182, 212, 0.3), transparent),
+    radial-gradient(1px 1px at 40px 70px, rgba(168, 85, 247, 0.3), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(236, 72, 153, 0.3), transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(6, 182, 212, 0.3), transparent);
+  background-repeat: repeat;
+  background-size: 150px 100px;
+  animation: particle-float 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes particle-float {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-150px, -100px); }
+}
+
+/* Text effects */
+.text-glow {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+.text-hologram {
+  background: linear-gradient(45deg, #06b6d4, #8b5cf6, #ec4899);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 3s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Focus states */
+.focus-glow:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.5);
+}
+
+/* Responsive animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow-pulse,
+  .animate-neon-flicker,
+  .animate-typing-dots,
+  .animate-scan-line,
+  .animate-hologram,
+  .animate-data-stream {
+    animation: none;
+  }
+  
+  .hover-glow:hover,
+  .hover-lift:hover,
+  .hover-scale:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
