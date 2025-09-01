@@ -32,7 +32,7 @@ class Queue {
         const command = this.getNext();
         if (command) {
           console.log("执行命令", command);
-          await useTerminalStore.getState().getTerminal(0).executeCommand(command);
+          await useTerminalStore.getState().getTerminal(0)?.executeCommand(command);
         }
       }
     } finally {

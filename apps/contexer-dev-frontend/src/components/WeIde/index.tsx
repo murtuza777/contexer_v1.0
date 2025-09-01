@@ -8,17 +8,40 @@ import { useEditorStore } from "./stores/editorStore"
 import { FileExplorer } from "./components/IDEContent/FileExplorer"
 import { Search } from "./components/IDEContent/Search"
 import { ContextComposer } from "./components/IDEContent/ContextComposer"
-import { VisualObserver } from "./components/IDEContent/VisualObserver"
 import { ErrorFixer } from "./components/IDEContent/ErrorFixer"
 import { TeamExample } from "../Role"
+import { useProjectInit } from "../../hooks/useProjectInit"
+import { useChatProjectSync } from "../../hooks/useChatProjectSync"
+import { useSeamlessStateManagement } from "../../hooks/useSeamlessStateManagement"
+import { useChatStatePersistence } from "../../hooks/useChatStatePersistence"
 
 export default function WeIde() {
   const [activeTab, setActiveTab] = useState("");
   const [showTerminal, setShowTerminal] = useState(true);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const { setDirty } = useEditorStore();
-  const [activeView, setActiveView] = useState<"files" | "search" | "context" | "observer" | "fixer">("files");
+  const [activeView, setActiveView] = useState<"files" | "search" | "context" | "fixer">("files");
+  
+  // Handle view changes and emit events
+  const handleViewChange = (view: "files" | "search" | "context" | "fixer") => {
+    setActiveView(view);
+    // Emit custom event for view change
+    const event = new CustomEvent('view:change', { detail: { view } });
+    window.dispatchEvent(event);
+  };
   const [currentLine, setCurrentLine] = useState<number | undefined>();
+  
+  // Initialize project state
+  useProjectInit();
+  
+  // Sync chat selection with project selection
+  useChatProjectSync();
+  
+  // Seamless state management between context and builder
+  useSeamlessStateManagement();
+  
+  // Chat state persistence
+  useChatStatePersistence();
 
   useEffect(() => {
     const handleEmit = (
@@ -78,10 +101,11 @@ export default function WeIde() {
       {/* Activity Bar (Icon Bar) */}
       <ActivityBar
         activeView={activeView}
-        onViewChange={setActiveView}
+        onViewChange={handleViewChange}
         onToggleTerminal={() => setShowTerminal(!showTerminal)}
         showTerminal={showTerminal}
       />
+
 
 
       <PanelGroup direction="horizontal">
@@ -95,7 +119,6 @@ export default function WeIde() {
           {activeView === "files" && <FileExplorer onFileSelect={handleFileSelect} />}
           {activeView === "search" && <Search onFileSelect={handleFileSelect} />}
           {activeView === "context" && <ContextComposer onFileSelect={handleFileSelect} />}
-          {activeView === "observer" && <VisualObserver onFileSelect={handleFileSelect} />}
           {activeView === "fixer" && <ErrorFixer onFileSelect={handleFileSelect} />}
         </Panel>
 

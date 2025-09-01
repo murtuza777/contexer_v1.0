@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     // Create per-request Supabase client (uses user's Authorization header)
     const supabase = createRequestSupabase(request);
     
-    // Get user from session
+    // Get user from session or handle guest users
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
       console.log('No authorization header found');
@@ -29,6 +29,15 @@ export async function GET(request: NextRequest) {
     // Extract JWT token
     const token = authHeader.replace('Bearer ', '');
     console.log('Attempting to authenticate with token...');
+    
+    // Handle guest token for GET requests
+    if (token === 'guest-token') {
+      // For guest users, return empty projects array
+      return NextResponse.json({
+        success: true,
+        projects: []
+      });
+    }
     
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
@@ -102,7 +111,7 @@ export async function POST(request: NextRequest) {
     // Create per-request Supabase client (uses user's Authorization header)
     const supabase = createRequestSupabase(request);
     
-    // Get user from session
+    // Get user from session or handle guest users
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
       return NextResponse.json({
@@ -113,13 +122,23 @@ export async function POST(request: NextRequest) {
 
     // Extract JWT token
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    if (authError || !user) {
-      return NextResponse.json({
-        success: false,
-        errors: ['Invalid authentication']
-      }, { status: 401 });
+    // Handle guest token for POST requests
+    let userId: string;
+    if (token === 'guest-token') {
+      // For guest users, use a consistent guest user UUID
+      userId = '00000000-0000-0000-0000-000000000000';
+    } else {
+      // For authenticated users, use Supabase auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        return NextResponse.json({
+          success: false,
+          errors: ['Invalid authentication']
+        }, { status: 401 });
+      }
+      userId = user.id;
     }
 
     // Sanitize and prepare context with timestamps
@@ -130,15 +149,42 @@ export async function POST(request: NextRequest) {
       version: projectContext.version || '1.0.0'
     };
 
-    // Create new project
+    // For chat-as-project model: each chat_uuid should have exactly one project
+    // If a project already exists for this chat_uuid, return it
+    if (body.chat_uuid) {
+      const { data: existingProject } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('chat_uuid', body.chat_uuid)
+        .eq('user_id', userId)
+        .single();
+      
+      if (existingProject) {
+        console.log('Project already exists for chat UUID:', body.chat_uuid);
+        return NextResponse.json({
+          success: true,
+          project: existingProject
+        });
+      }
+    }
+
+    // Create new project with isolated context
     const { data: newProject, error: createError } = await supabase
       .from('projects')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         name: name.trim(),
         description: description?.trim() || null,
         context: contextWithTimestamps,
-        status: 'draft'
+        status: 'draft',
+        // Chat-as-project: each project is tied to exactly one chat
+        chat_uuid: body.chat_uuid || null,
+        generation_status: body.generation_status || 'context_only',
+        project_path: body.project_path || null,
+        // Initialize with completely clean state
+        chat_messages: [],
+        builder_state: {},
+        last_chat_activity: new Date().toISOString()
       })
       .select()
       .single();

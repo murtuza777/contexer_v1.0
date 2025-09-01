@@ -6,12 +6,12 @@ interface LogoMarkProps {
   title?: string;
 }
 
-export default function LogoMark({ className = "w-6 h-6", title = "Contexer" }: LogoMarkProps) {
+export default function LogoMark({ className = "w-8 h-8", title = "Contexer" }: LogoMarkProps) {
   return (
     <img
       src={logoUrl}
       alt={title}
-      className={`${className} block object-contain select-none`}
+      className={`${className} block select-none`}
       draggable={false}
       loading="eager"
       decoding="async"

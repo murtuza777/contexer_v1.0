@@ -8,19 +8,29 @@ export interface ErrorMessage {
   severity: "error" | "warning" | "info";
 }
 
-interface FileStore {
+interface ChatFileState {
   files: Record<string, string>;
-  setOldFiles: (files: Record<string, string>) => void;
   oldFiles: Record<string, string>;
+  isFirstSend: Record<string, boolean>;
+  isUpdateSend: Record<string, boolean>;
+  selectedPath: string;
+  projectRoot: string;
+}
+
+interface FileStore {
+  chatStates: Record<string, ChatFileState>;
+  currentChatId: string | null;
   errors: ErrorMessage[];
   addError: (error: ErrorMessage) => void;
   removeError: (index: number) => void;
   clearErrors: () => void;
-  isFirstSend: Record<string, boolean>;
-  isUpdateSend: Record<string, boolean>;
+  setCurrentChat: (chatId: string) => void;
+  clearChat: (chatId: string) => void;
   setIsFirstSend: () => void;
-  setEmptyFiles: () => void;
   setIsUpdateSend: () => void;
+  setOldFiles: (files: Record<string, string>) => void;
+  setEmptyFiles: () => void;
+  getCurrentState: () => ChatFileState;
   addFile: (
     path: string,
     content: string,
@@ -34,23 +44,26 @@ interface FileStore {
   createFolder: (path: string) => Promise<void>;
   getFiles: () => string[];
   setFiles: (files: Record<string, string>) => Promise<void>;
-  selectedPath: string;
-  projectRoot: string;
   setSelectedPath: (path: string) => void;
   setProjectRoot: (path: string) => void;
-
+  getCurrentFiles: () => Record<string, string>;
+  getCurrentSelectedPath: () => string;
+  getCurrentProjectRoot: () => string;
 }
 
-const initialFiles = {};
+const createInitialChatState = (): ChatFileState => ({
+  files: {},
+  oldFiles: {},
+  isFirstSend: {},
+  isUpdateSend: {},
+  selectedPath: '',
+  projectRoot: '',
+});
 
 export const useFileStore = create<FileStore>((set, get) => ({
-  files: initialFiles,
+  chatStates: {},
+  currentChatId: null,
   errors: [],
-  oldFiles: initialFiles,
-  setOldFiles: async (oldFiles: Record<string, string>) => {
-    // 从错误信息来看，需要在 FileStore 接口中添加 oldFiles 属性和 setOldFiles 方法
-    set({ oldFiles })
-  },
   addError: (error) => {
     if (window.isLoading) {
       return;
@@ -70,83 +83,267 @@ export const useFileStore = create<FileStore>((set, get) => ({
       errors: state.errors.filter((_, i) => i !== index),
     })),
   clearErrors: () => set({ errors: [] }),
-  isFirstSend: {},
-  isUpdateSend: {},
+
+  setCurrentChat: (chatId: string) => {
+    set({ currentChatId: chatId });
+  },
+
+  clearChat: (chatId: string) => {
+    set((state) => {
+      const newChatStates = { ...state.chatStates };
+      delete newChatStates[chatId];
+      return { chatStates: newChatStates };
+    });
+  },
 
   setIsFirstSend: () => {
-    set({ isFirstSend: {} });
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: { ...currentState, isFirstSend: {} },
+        },
+      };
+    });
   },
 
   setIsUpdateSend: () => {
-    set({ isUpdateSend: {} });
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: { ...currentState, isUpdateSend: {} },
+        },
+      };
+    });
+  },
+
+  setOldFiles: (oldFiles: Record<string, string>) => {
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: { ...currentState, oldFiles },
+        },
+      };
+    });
+  },
+
+  setEmptyFiles: () => {
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: { ...currentState, files: {}, isFirstSend: {}, isUpdateSend: {} },
+        },
+      };
+    });
+  },
+
+  getCurrentState: () => {
+    const chatId = get().currentChatId;
+    return (chatId && get().chatStates[chatId]) || createInitialChatState();
   },
 
   addFile: async (path, content, syncFileClose?: boolean) => {
-    set({
-      files: { ...get().files, [path]: content },
-      isFirstSend: { ...get().isFirstSend, [path]: true },
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: {
+            ...currentState,
+            files: { ...currentState.files, [path]: content },
+            isFirstSend: { ...currentState.isFirstSend, [path]: true },
+          },
+        },
+      };
     });
     await syncFileSystem(syncFileClose);
   },
 
-  setEmptyFiles: () => {
-    window.fileHashMap = new Map<string, string>();
-    set({ files: {} });
+  getContent: (path) => {
+    const chatId = get().currentChatId;
+    if (!chatId) return "";
+    return get().chatStates[chatId]?.files[path] || "";
   },
 
-  getContent: (path) => get().files[path] || "",
-
-
   updateContent: async (path, content, syncFileClose?: boolean, closeUpdateChatLog?: boolean) => {
-    set({
-      files: { ...get().files, [path]: content },
-      isUpdateSend: closeUpdateChatLog ? {} : { ...get().isUpdateSend, [path]: !get().isFirstSend[path] },
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: {
+            ...currentState,
+            files: { ...currentState.files, [path]: content },
+            isUpdateSend: closeUpdateChatLog ? {} : { 
+              ...currentState.isUpdateSend, 
+              [path]: !currentState.isFirstSend[path] 
+            },
+          },
+        },
+      };
     });
     await syncFileSystem(syncFileClose);
   },
 
   renameFile: async (oldPath, newPath) => {
-    const files = { ...get().files };
-    const content = files[oldPath];
-    if (content !== undefined) {
-      delete files[oldPath];
-      files[newPath] = content;
-      set({ files });
-      await syncFileSystem();
-    }
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      const files = { ...currentState.files };
+      const content = files[oldPath];
+      if (content !== undefined) {
+        delete files[oldPath];
+        files[newPath] = content;
+        return {
+          chatStates: {
+            ...state.chatStates,
+            [chatId]: { ...currentState, files },
+          },
+        };
+      }
+      return state;
+    });
+    await syncFileSystem();
   },
 
   deleteFile: async (path) => {
-    const files = { ...get().files };
-    delete files[path];
-    const prefix = path.endsWith("/") ? path : `${path}/`;
-    Object.keys(files).forEach((filePath) => {
-      if (filePath.startsWith(prefix)) {
-        delete files[filePath];
-      }
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      const files = { ...currentState.files };
+      delete files[path];
+      const prefix = path.endsWith("/") ? path : `${path}/`;
+      Object.keys(files).forEach((filePath) => {
+        if (filePath.startsWith(prefix)) {
+          delete files[filePath];
+        }
+      });
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: { ...currentState, files },
+        },
+      };
     });
-    set({ files });
     await syncFileSystem();
   },
 
   createFolder: async (path) => {
-    const folderPath = path.endsWith("/") ? path : `${path}/`;
-    if (Object.keys(get().files).some((file) => file.startsWith(folderPath))) {
-      return;
-    }
-    set({ files: { ...get().files, [`${folderPath}index.tsx`]: "" } });
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      const folderPath = path.endsWith("/") ? path : `${path}/`;
+      if (Object.keys(currentState.files).some((file) => file.startsWith(folderPath))) {
+        return state;
+      }
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: {
+            ...currentState,
+            files: { ...currentState.files, [`${folderPath}index.tsx`]: "" },
+          },
+        },
+      };
+    });
     await syncFileSystem();
   },
 
   setFiles: async (files: Record<string, string>) => {
-    set({ files });
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: { ...currentState, files },
+        },
+      };
+    });
     await syncFileSystem();
   },
 
-  getFiles: () => Object.keys(get().files),
-  selectedPath: '',
-  projectRoot: '',
-  setSelectedPath: (path: string) => set({ selectedPath: path }),
-  setProjectRoot: (path: string) => set({ projectRoot: path }),
+  getFiles: () => {
+    const chatId = get().currentChatId;
+    if (!chatId) return [];
+    return Object.keys(get().chatStates[chatId]?.files || {});
+  },
+
+  setSelectedPath: (path: string) => {
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: { ...currentState, selectedPath: path },
+        },
+      };
+    });
+  },
+
+  setProjectRoot: (path: string) => {
+    const chatId = get().currentChatId;
+    if (!chatId) return;
+
+    set((state) => {
+      const currentState = state.chatStates[chatId] || createInitialChatState();
+      return {
+        chatStates: {
+          ...state.chatStates,
+          [chatId]: { ...currentState, projectRoot: path },
+        },
+      };
+    });
+  },
+
+  getCurrentFiles: () => {
+    const chatId = get().currentChatId;
+    if (!chatId) return {};
+    return get().chatStates[chatId]?.files || {};
+  },
+
+  getCurrentSelectedPath: () => {
+    const chatId = get().currentChatId;
+    if (!chatId) return '';
+    return get().chatStates[chatId]?.selectedPath || '';
+  },
+
+  getCurrentProjectRoot: () => {
+    const chatId = get().currentChatId;
+    if (!chatId) return '';
+    return get().chatStates[chatId]?.projectRoot || '';
+  },
 
 }));

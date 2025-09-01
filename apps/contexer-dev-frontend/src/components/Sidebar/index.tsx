@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { Settings, SettingsTab, TAB_KEYS } from "../Settings"
+import { ContextSetupWizard, type WizardContextData } from "../ContextSetupWizard/ContextWizard"
 import { db } from "../../utils/indexDB"
 import { eventEmitter } from "../AiChat/utils/EventEmitter"
 import useUserStore from "../../stores/userSlice"
+import useProjectStore from "../../stores/projectSlice"
 import { useTranslation } from "react-i18next"
+import { v4 as uuidv4 } from "uuid"
 
 interface SidebarProps {
   isOpen: boolean
@@ -24,6 +27,7 @@ export function Sidebar({
 }: SidebarProps) {
   const { t } = useTranslation()
   const { user, isAuthenticated, logout, openLoginModal } = useUserStore()
+  const { createProjectFromChat } = useProjectStore()
 
   const [settingsState, setSettingsState] = useState<{
     isOpen: boolean
@@ -41,6 +45,13 @@ export function Sidebar({
     }[]
   >([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [wizardState, setWizardState] = useState<{
+    isOpen: boolean
+    chatUuid: string | null
+  }>({
+    isOpen: false,
+    chatUuid: null
+  })
 
   // Load chat history
   const loadChatHistory = async () => {
@@ -145,6 +156,75 @@ export function Sidebar({
     } else {
       window.open(url, "_blank", "noopener,noreferrer")
     }
+  }
+
+  const handleNewChatClick = () => {
+    const newChatUuid = uuidv4()
+    setWizardState({
+      isOpen: true,
+      chatUuid: newChatUuid
+    })
+  }
+
+  const handleWizardComplete = async (contextData: WizardContextData) => {
+    if (!wizardState.chatUuid) return
+
+    try {
+      console.log('🎯 Wizard completed with data:', contextData)
+      
+      // Emit context clear event first to ensure clean state
+      eventEmitter.emit('context:clear')
+      
+      // Create project with wizard data
+      const project = await createProjectFromChat(wizardState.chatUuid, {
+        name: contextData.projectName,
+        description: contextData.appDescription,
+        context: {
+          goal: contextData.appDescription,
+          user_stories: [{
+            id: `story_${Date.now()}`,
+            description: contextData.userStories || 'Initial user story from wizard',
+            acceptance_criteria: ['User can access the feature', 'Feature works as expected'],
+            status: 'pending' as const,
+            priority: 'medium' as const,
+            estimated_effort: 'medium' as const
+          }],
+          tech_stack: contextData.techStack,
+          project_type: 'web_app',
+          version: '1.0.0',
+          readme_content: contextData.readme,
+          additional_notes: contextData.constraints
+        },
+        status: 'draft',
+        generation_status: 'context_only'
+      })
+
+      console.log('✅ Project created:', project)
+
+      // Close wizard first
+      setWizardState({
+        isOpen: false,
+        chatUuid: null
+      })
+
+      // Then create new chat with context
+      eventEmitter.emit('chat:create', wizardState.chatUuid)
+      if (onChatSelect) {
+        onChatSelect(wizardState.chatUuid)
+      } else {
+        eventEmitter.emit('chat:select', wizardState.chatUuid)
+      }
+    } catch (error) {
+      console.error('❌ Failed to create project with context:', error)
+      alert('Failed to save project. Please try again.')
+    }
+  }
+
+  const handleWizardClose = () => {
+    setWizardState({
+      isOpen: false,
+      chatUuid: null
+    })
   }
   const renderUserSection = () => {
     if (!isAuthenticated) {
@@ -252,13 +332,7 @@ export function Sidebar({
 
         {/* New Chat Button */}
         <button
-          onClick={() => {
-            if (onChatSelect) {
-              onChatSelect("");
-            } else {
-              eventEmitter.emit("chat:select", "");
-            }
-          }}
+          onClick={handleNewChatClick}
           className="mx-4 my-3 p-3 flex items-center gap-3 text-white bg-gradient-to-r from-neon-green/20 to-neon-blue/20 hover:from-neon-green/30 hover:to-neon-blue/30 border-2 border-neon-green/30 hover:border-neon-green/50 rounded-xl transition-all duration-300 text-[14px] font-medium transform hover:scale-105 shadow-lg hover:shadow-neon-green/25"
         >
           <svg
@@ -401,6 +475,13 @@ export function Sidebar({
         isOpen={settingsState.isOpen}
         onClose={closeSettings}
         initialTab={settingsState.tab}
+      />
+
+      <ContextSetupWizard
+        isOpen={wizardState.isOpen}
+        onClose={handleWizardClose}
+        onComplete={handleWizardComplete}
+        chatUuid={wizardState.chatUuid || ''}
       />
     </>,
     document.body

@@ -9,7 +9,6 @@ import LandingPage from "./components/LandingPage";
 import EditorPreviewTabs from "./components/EditorPreviewTabs";
 import { useFeatureNav } from "./stores/featureNavSlice";
 import { ContextComposer } from "./components/WeIde/components/IDEContent/ContextComposer";
-import { VisualObserver } from "./components/WeIde/components/IDEContent/VisualObserver";
 import { ErrorFixer } from "./components/WeIde/components/IDEContent/ErrorFixer";
 import "./utils/i18";
 import classNames from "classnames";
@@ -84,11 +83,6 @@ function App() {
                     {active === 'context' && (
                       <div className="flex-1 m-3 rounded-2xl border-2 border-neon-green/20 bg-card-bg overflow-hidden shadow-lg shadow-neon-green/10">
                         <ContextComposer />
-                      </div>
-                    )}
-                    {active === 'observer' && (
-                      <div className="flex-1 m-3 rounded-2xl border-2 border-neon-green/20 bg-card-bg overflow-hidden shadow-lg shadow-neon-green/10">
-                        <VisualObserver />
                       </div>
                     )}
                     {active === 'fixer' && (

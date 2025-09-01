@@ -52,7 +52,6 @@ function TopNavButtons() {
     <div className="flex items-center gap-3">
       {btn('chat', 'Chat/Builder')}
       {btn('context', 'Context Composer')}
-      {btn('observer', 'Visual Observer')}
       {btn('fixer', 'Error Fixer')}
     </div>
   );

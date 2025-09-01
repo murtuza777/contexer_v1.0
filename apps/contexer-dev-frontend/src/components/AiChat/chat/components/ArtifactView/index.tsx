@@ -135,7 +135,7 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
   }, [filePaths, fileStates]);
 
   const npmCommands = useMemo(() => {
-    const commands = [];
+    const commands: Array<{type: string; command: string}> = [];
     // Use regex to match shell commands
     const shellCommandRegex =
       /<boltAction\s+type="shell"\s*>([\s\S]*?)<\/boltAction>/g;
@@ -488,7 +488,7 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
                             ...prev,
                             [cmd.command]: "running",
                           }));
-                          await getTerminal(0).executeCommand("npm install");
+                          await getTerminal(0)?.executeCommand("npm install");
                           setCommandStatus((prev) => ({
                             ...prev,
                             [cmd.command]: "completed",
@@ -560,7 +560,7 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
                             ...prev,
                             [cmd.command]: "running",
                           }));
-                          await getTerminal(0).executeCommand("npm run dev");
+                          await getTerminal(0)?.executeCommand("npm run dev");
                           setCommandStatus((prev) => ({
                             ...prev,
                             [cmd.command]: "completed",

@@ -36,7 +36,8 @@ export default function WeAPI(): React.ReactElement {
   const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null);
   const [response, setResponse] = useState<ApiResponse | null>(null);
   const apiListRef = useRef<any>(null);
-  const { files, updateContent } = useFileStore();
+  const fileStore = useFileStore();
+  const getCurrentFiles = useFileStore(state => state.getCurrentFiles);
   const isUpdatingRef = useRef<boolean>(false);
 
   const { isDarkMode, toggleTheme, setTheme } = useThemeStore();
@@ -47,7 +48,8 @@ export default function WeAPI(): React.ReactElement {
       return;
     }
 
-    const apiJsonStr = files["api.json"];
+    const files = (getCurrentFiles && getCurrentFiles()) || {};
+    const apiJsonStr = files && typeof files === 'object' ? files["api.json"] : undefined;
     try {
       if (apiJsonStr) {
         const parsedData = JSON.parse(apiJsonStr);
@@ -56,14 +58,14 @@ export default function WeAPI(): React.ReactElement {
     } catch (e) {
       console.warn("Failed to parse api.json:", e);
     }
-  }, [files]);
+  }, []);
 
   const saveToFile = async (newApiList: ApiCollection): Promise<boolean> => {
     try {
       isUpdatingRef.current = true;
       const apiJsonStr = JSON.stringify(newApiList, null, 2);
       const filePath = "api.json";
-      updateContent(filePath, apiJsonStr);
+      await fileStore.updateContent(filePath, apiJsonStr);
       setApiList(newApiList);
       return true;
     } catch (e) {

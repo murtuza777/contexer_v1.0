@@ -6,7 +6,7 @@ export const Logo = () => (
     <motion.div
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className="h-24 w-24 flex justify-center items-center relative p-2 rounded-3xl bg-gradient-to-br from-[#1E90FF] via-[#4169E1] to-[#000080] overflow-hidden shadow-lg"
+      className="h-24 w-24 flex justify-center items-center relative p-2 rounded-3xl overflow-hidden shadow-lg"
     >
       <motion.div
         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"

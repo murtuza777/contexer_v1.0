@@ -41,8 +41,8 @@ const useTerminalStore = create<TerminalState>((set, get) => ({
     return terminalArray[index];
   },
 
-  // Currently does not support illegal terminal registration from other places
-  // When registering, must have clear ref hook to prevent unknown errors
+  // 暂不支持 从其他地方 非法地注册终端
+  // 注册时，必须有明确的ref钩子，防止出现未知错误
   newTerminal: async (cb = () => { }) => {
 
     const ref = React.createRef<HTMLDivElement>()
@@ -51,40 +51,40 @@ const useTerminalStore = create<TerminalState>((set, get) => ({
     cb(t)
   },
 
-  // Add terminal
+  // 添加终端
   // addTerminal: async (container: HTMLElement) => {
   addTerminal: async (containerRef: React.RefObject<HTMLDivElement>) => {
 
-    // Instantiate a new terminal
+    // 实例化一个新的终端
     const terminal = new weTerminal(null);
 
     const processId = Math.random().toString(36).substr(2, 9);;
-    // Initialize to get processId
+    // 初始化得到 processId
     await terminal.initialize(containerRef.current, processId)
 
     terminal.setContainerRef(containerRef);
 
-    const newTerminals = new Map(get().terminals); // Get current terminals
-    newTerminals.set(processId, terminal); // Add new terminal
+    const newTerminals = new Map(get().terminals); // 获取当前的 terminals
+    newTerminals.set(processId, terminal); // 添加新的终端
 
-    set({ terminals: newTerminals }); // Update state
+    set({ terminals: newTerminals }); // 更新状态
 
     return terminal;
   },
 
-  // Remove terminal
+  // 移除终端
   removeTerminal: (processId: string) => {
-    const newTerminals = new Map(get().terminals); // Get current terminals
+    const newTerminals = new Map(get().terminals); // 获取当前的 terminals
 
     const terminal = newTerminals.get(processId) as weTerminal
 
     terminal?.destroy()
-    newTerminals.delete(processId); // Remove specified terminal
+    newTerminals.delete(processId); // 移除指定的终端
 
-    set({ terminals: newTerminals }); // Update state
+    set({ terminals: newTerminals }); // 更新状态
   },
 
-  // Set theme
+  // 设置主题
   setTheme: (isDark: boolean) => set({ isDarkMode: isDark }),
 }));
 

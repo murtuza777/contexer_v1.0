@@ -106,6 +106,13 @@ export interface DatabaseProject {
   status: ProjectStatus;
   created_at: string;
   updated_at: string;
+  // New fields for chat and builder state management
+  chat_uuid?: string;
+  chat_messages?: any[];
+  last_chat_activity?: string;
+  builder_state?: any;
+  project_path?: string;
+  generation_status?: 'context_only' | 'generating' | 'generated' | 'failed';
 }
 
 export interface DatabaseAgentMemory {
@@ -172,6 +179,10 @@ export interface CreateProjectRequest {
   name: string;
   description?: string;
   context: ProjectContext;
+  // Required for chat-as-project model
+  chat_uuid?: string;
+  generation_status?: 'context_only' | 'generating' | 'generated' | 'failed';
+  project_path?: string;
 }
 
 export interface UpdateProjectRequest {
@@ -179,6 +190,10 @@ export interface UpdateProjectRequest {
   description?: string;
   context?: ProjectContext;
   status?: ProjectStatus;
+  // New fields for state management
+  generation_status?: 'context_only' | 'generating' | 'generated' | 'failed';
+  project_path?: string;
+  chat_uuid?: string;
 }
 
 export interface SaveContextRequest {

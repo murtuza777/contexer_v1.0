@@ -38,8 +38,9 @@ export async function getWebContainerInstance(): Promise<WebContainer | null> {
       await instance.fs.mkdir('/', { recursive: true });
       
       // Mount initial files
-      const { files } = useFileStore.getState();
-      for (const [path, contents] of Object.entries(files)) {
+      const getCurrentFiles = useFileStore.getState().getCurrentFiles;
+      const files = (getCurrentFiles && getCurrentFiles()) || {} as Record<string, string>;
+      for (const [path, contents] of Object.entries(files || {})) {
         try {
           const fullPath = `/${path}`;
           // Create parent directories

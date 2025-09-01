@@ -1,7 +1,10 @@
 import { Terminal as XTerm } from '@xterm/xterm';
+// @ts-ignore - Type definitions may not be available
 import { FitAddon } from '@xterm/addon-fit';
+// @ts-ignore - Type definitions may not be available  
 import { WebLinksAddon } from '@xterm/addon-web-links';
-import { IPty } from 'node-pty';
+// @ts-ignore - Type definitions may not be available
+import * as pty from 'node-pty';
 import { updateFileSystemNow } from '../../../services';
 import { getWebContainerInstance } from '../../../services/webcontainer';
 import { getNodeContainerInstance } from '../../../services/nodecontainer';
@@ -11,20 +14,49 @@ interface CommandResult {
   output: string[];
   exitCode: number;
 }
-// Unified dark theme (force black background for better readability)
-const darkTheme = {
-  background: '#0a0a0a',
+// Light theme in VSCode style
+const lightTheme = {
   foreground: '#ffffff',
-  cursor: '#00ffff',
-  selectionBackground: '#00ffff33',
+  cursor: '#ffffff',
+  background: 'transparent',
+  black: '#ffffff',
+  red: '#cd3131',
+  green: '#00bc00',
+  yellow: '#949800',
+  blue: '#0451a5',
+  magenta: '#bc05bc',
+  cyan: '#0598bc',
+  white: '#ffffff',
+  brightBlack: '#ffffff',
+  brightRed: '#f14c4c',
+  brightGreen: '#23d18b',
+  brightYellow: '#f5f543',
+  brightBlue: '#3b8eea',
+  brightMagenta: '#d670d6',
+  brightCyan: '#29b8db',
+  brightWhite: '#ffffff'
 };
 
-// Keep a lightTheme reference but align to dark to avoid white terminals
-const lightTheme = {
-  background: '#0a0a0a',
+// Dark theme in VSCode style
+const darkTheme = {
+  background: 'transparent',
   foreground: '#ffffff',
-  cursor: '#00ffff',
-  selectionBackground: '#00ffff33',
+  black: '#ffffff',
+  red: '#f14c4c',
+  green: '#23d18b',
+  yellow: '#f5f543',
+  blue: '#3b8eea',
+  magenta: '#d670d6',
+  cyan: '#29b8db',
+  white: '#ffffff',
+  brightBlack: '#ffffff',
+  brightRed: '#f14c4c',
+  brightGreen: '#23d18b',
+  brightYellow: '#f5f543',
+  brightBlue: '#3b8eea',
+  brightMagenta: '#d670d6',
+  brightCyan: '#29b8db',
+  brightWhite: '#ffffff'
 };
 
 /**
@@ -41,6 +73,7 @@ const lightTheme = {
  * terminal.initialize(React.createRef<HTMLDivElement>().current)
  * 
  */
+
 class Terminal {
   private terminal: XTerm | null = null;
   private fitAddon: FitAddon | null = null;
@@ -125,6 +158,18 @@ class Terminal {
 
     await this.waitCommand(addError);
 
+        if (!window.electron && !sessionStorage.getItem('dependenciesInstalled')) {
+      this.terminal?.writeln('\x1b[1;33mInstalling dependencies, please wait...\x1b[0m');
+      const installProcess = await this.executeCommandInWeb('npm install');
+      if (installProcess.exitCode === 0) {
+        this.terminal?.writeln('\x1b[1;32mDependencies installed successfully.\x1b[0m');
+        sessionStorage.setItem('dependenciesInstalled', 'true');
+      } else {
+        this.terminal?.writeln('\x1b[1;31mFailed to install dependencies.\x1b[0m');
+      }
+      this.terminal?.write('$ ');
+    }
+
     this.isReady = true;
 
 
@@ -185,8 +230,7 @@ class Terminal {
   public setTheme(isDarkMode: boolean) {
     this.isDarkMode = isDarkMode;
     if (this.terminal) {
-      // Always use our unified dark theme to ensure black terminal background
-      this.terminal.options.theme = darkTheme;
+      this.terminal.options.theme = isDarkMode ? darkTheme : lightTheme;
     }
   }
 
@@ -203,8 +247,8 @@ class Terminal {
   // Command wait in Web environment
   private async webWaitCommand(addError?: (error: any) => void) {
     const instance = await getWebContainerInstance();
-    if (!instance) return;
-    const process = await instance.spawn('/bin/jsh', [], {
+    const process = await instance?.spawn('jsh', [], {
+      env: { PATH: 'node_modules/.bin:/usr/local/bin:/usr/bin:/bin' },
       terminal: {
         cols: 80,
         rows: 15,
@@ -229,13 +273,15 @@ class Terminal {
             });
           }
           if (!this.initId) {
-            const parts = data?.split('/')
-            if (parts && parts[1]) {
-              this.initId = parts[1].split('[39m')[0].trim()
+            this.initId = this.stripAnsi(data?.split('/')[1])?.trim();
+          }
+          if (this.terminal) {
+            if (this.initId) {
+              this.terminal.write(data.replaceAll(this.initId, 'contexer'));
+            } else {
+              this.terminal.write(data);
             }
           }
-          const replaced = this.initId ? data.split(this.initId).join('Contexer') : data
-          this.terminal?.write(replaced)
   
         },
       }),
@@ -326,10 +372,16 @@ class Terminal {
   private async executeCommandInWeb(command: string): Promise<CommandResult> {
     const instance = await getWebContainerInstance();
     if (!instance) {
-      return { output: [], exitCode: 1 };
+      return {
+        output: ['Terminal instance not available.'],
+        exitCode: 1,
+      };
     }
     const process = await instance.spawn('jsh', ['-c', command], {
-      env: { npm_config_yes: true },
+      env: { 
+        npm_config_yes: true,
+        PATH: 'node_modules/.bin:/usr/local/bin:/usr/bin:/bin'
+      },
     });
 
     process.output.pipeTo(

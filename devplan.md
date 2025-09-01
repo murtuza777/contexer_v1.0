@@ -175,57 +175,61 @@ Landing Page → Authentication → Dashboard → Feature Selection → Autonomo
   - Implement progress indicators
   - *Deliverable*: Smooth context creation workflow
 
-### Visual Observer (Days 6-7)
-*Database & Security (Waji)*
-- **Observation Data Storage**
-  - Add `feature_status` field to context structure
-  - Create validation history table
-  - Set up feature validation tracking
-  - *Deliverable*: Database schema for feature validation
+### Visual Observer (Days 6-7) - **REVISED PLAN**
+*Leveraging Existing User Story Parsing for Streamlined Implementation*
 
-- **Security for Validation**
-  - Implement validation data isolation
-  - Create validation result auditing
-  - Set up safe DOM access policies
-  - *Deliverable*: Secure validation data storage
+*Database & Security (Waji)*
+- **Validation Data Storage**
+  - Add `validation_results JSONB` to existing projects table
+  - Create `validation_history` table with project_id, story_id, criteria, results, screenshots
+  - Set up RLS policies for validation data isolation
+  - *Deliverable*: Database schema ready for Playwright validation results
+
+- **Security for Test Execution**
+  - Implement safe test execution environment
+  - Create validation result sanitization
+  - Set up screenshot storage with access controls
+  - *Deliverable*: Secure Playwright test execution system
 
 *Backend & AI (Murtuza & Safi)*
-- **Observation System**
-  - Develop DOM monitoring for feature validation
-  - Create terminal log analyzer
-  - Implement feature completeness calculator
-  - *Deliverable*: Backend system that validates features
+- **Story-to-Test Mapping Engine**
+  - Build story mapper that converts existing `UserStory.acceptance_criteria[]` to Playwright actions
+  - Create smart selector generation (data-testid → aria-label → text fallbacks)
+  - Implement test action types: click, fill, expect, navigate
+  - *Deliverable*: Direct mapping from parsed stories to executable tests
 
-- **Validation Engine**
-  - Design rule-based validation system
-  - Create validation confidence scoring
-  - Implement validation history tracking
-  - *Deliverable*: Validation engine that checks feature implementation
+- **Playwright Integration**
+  - Install and configure Playwright with headless browser
+  - Create test executor that runs against local dev server
+  - Implement screenshot capture on validation failures
+  - *Deliverable*: Working Playwright execution engine using existing story data
 
-- **Integration Points**
-  - Connect validation results to Viber
-  - Link validation data to error fixing
-  - Implement context-aware validation
-  - *Deliverable*: Working integration between components
+- **Validation API Endpoints**
+  - Build `/api/visual-observer/validate` endpoint
+  - Create `/api/visual-observer/results/:projectId` endpoint
+  - Connect to existing Context Composer data via `parseAndEnhanceUserStories()`
+  - *Deliverable*: API integration with existing user story parsing
 
 *UI/UX (Basheer)*
-- **Preview Enhancement**
-  - Modify existing preview iframe
-  - Implement feature validation overlay
-  - Create progress tracker
-  - *Deliverable*: Preview with feature status indicators
+- **Visual Observer Panel**
+  - Create new Visual Observer component in WeIde layout
+  - Build validation progress tracker showing story completion
+  - Implement screenshot gallery for validation evidence
+  - *Deliverable*: Visual Observer UI integrated with existing IDE
 
-- **Monitoring UI**
-  - Design terminal panel with error highlighting
-  - Implement feature status dashboard
-  - Add build progress visualization
-  - *Deliverable*: Visual monitoring interface
+- **Test Execution Controls**
+  - Add "Run Validation" button that triggers story-based tests
+  - Create real-time validation status display
+  - Implement validation results viewer with pass/fail indicators
+  - *Deliverable*: User controls for Playwright test execution
 
-- **User Interaction**
-  - Build manual validation tools
-  - Implement screenshot capture
-  - Add validation reporting
-  - *Deliverable*: Interactive validation tools
+- **Integration with Existing Systems**
+  - Connect validation failures to existing Error Fixer component
+  - Link validation results to existing terminal error detection
+  - Use existing project isolation (chat-as-project) for test environments
+  - *Deliverable*: Seamless integration with existing Contexer workflow
+
+**Key Advantage**: Skip complex AI parsing since `parseAndEnhanceUserStories()` already provides structured acceptance criteria ready for Playwright mapping.
 
 ### Viber - AI Agent (Days 8-10)
 *Database & Security (Waji)*

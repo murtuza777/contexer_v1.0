@@ -1,10 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from "react";
-import {
-  FileText,
-  Code2,
-  Bot,
-  MessagesSquare
-} from "lucide-react";
+import { FileText, Code2, Bot } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { uploadImage } from "@/api/chat";
 import classNames from "classnames";
@@ -12,7 +7,6 @@ import { useFileStore } from "../../../../WeIde/stores/fileStore";
 import type { MentionOption } from "../MentionMenu";
 import { ErrorDisplay } from "./ErrorDisplay";
 import { ImagePreviewGrid } from "./ImagePreviewGrid";
-import { UploadButtons } from "./UploadButtons";
 import { SendButton } from "./SendButton";
 import type { ChatInputProps as ChatInputPropsType } from "./types";
 import { useTranslation } from "react-i18next";
@@ -53,7 +47,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
   baseModal,
   setBaseModal,
 }) => {
-  const { files, errors, removeError } = useFileStore();
+  const { errors, removeError, getCurrentFiles } = useFileStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sketchInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -77,6 +71,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
   const [isViberMode, setIsViberMode] = useState(false);
 
   const getFileOptions = () => {
+    const files = getCurrentFiles();
     return Object.entries(files).map(([path]) => ({
       id: path,
       icon: <FileText className="w-3 h-3" />,
@@ -523,7 +518,8 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
 
             <div className="flex items-center justify-between px-3 py-2 border-t border-slate-700/10">
               <div className="flex items-center gap-2">
-                <UploadButtons 
+                {/* Upload buttons temporarily disabled due to module resolution issues */}
+                {/* <UploadButtons 
                 isLoading={isLoading}
                 isUploading={isUploading}
                 append={append}
@@ -534,7 +530,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
                 setMessages={setMessages}
                 setBaseModal={setBaseModal}
                 onSketchClick={handleSketchClick}
-              />
+              /> */}
                 
                 {/* Mode toggle button */}
                 <button
@@ -543,7 +539,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
                   title={chatMode === ChatMode.Chat ? "Switch to Builder Mode" : "Switch to Chat Mode"}
                 >
                   {chatMode === ChatMode.Chat ? (
-                    <MessagesSquare className="w-4 h-4" />
+                    <Bot className="w-4 h-4" />
                   ) : (
                     <Code2 className="w-4 h-4" />
                   )}

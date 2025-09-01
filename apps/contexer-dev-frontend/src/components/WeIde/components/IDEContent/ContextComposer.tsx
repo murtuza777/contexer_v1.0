@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Save, Upload, RefreshCw, BookOpen, Code, FileText } from "lucide-react";
+import { Save, FileText, Loader2, Code2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { contextApi, type Project } from "@/services/contextApi";
 import useUserStore from "@/stores/userSlice";
+import useProjectStore from "@/stores/projectSlice";
 import { convertLegacyToNewContext, convertNewToLegacyContext } from "@/types/context";
 import { recommendTechFromText, type DetectionOutcome } from "@/utils/nlp/techStackDetector";
 import { parseAndEnhanceUserStories } from "@/utils/nlp/userStoryParser";
+import { eventEmitter } from "@/components/AiChat/utils/EventEmitter";
 
 interface ContextComposerProps {
   onFileSelect?: (path: string, line?: number) => void;
@@ -52,16 +54,28 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
     lastUpdated: new Date()
   });
 
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isAuthenticated, token } = useUserStore();
   const [detected, setDetected] = useState<DetectionOutcome | null>(null);
   const [readmePreview, setReadmePreview] = useState<string>("");
   const [isProcessingReadme, setIsProcessingReadme] = useState(false);
   const readmeDebounceRef = useRef<number | null>(null);
+  
+  // Use project store
+  const { 
+    currentProject, 
+    isLoading, 
+    error, 
+    setCurrentProject, 
+    setError, 
+    createProject, 
+    updateProject, 
+    loadProjects,
+    setCurrentProjectByChatUuid,
+    createProjectFromChat,
+    updateProjectActivity
+  } = useProjectStore();
 
   const handleTechStackToggle = (tech: string) => {
     setContext(prev => {
@@ -77,38 +91,137 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
     });
   };
 
-  // Load existing project or create new one
+  // Track current chat UUID from event emitter
+  const [currentChatUuid, setCurrentChatUuid] = useState<string | null>(null);
+
+  // Listen for chat selection events - each chat has its own project
+  useEffect(() => {
+    const handleChatSelect = (chatUuid: string) => {
+      console.log('🔄 ContextComposer: Chat selected (chat-as-project):', chatUuid);
+      setCurrentChatUuid(chatUuid);
+    };
+
+    const unsubscribe = eventEmitter.on('chat:select', handleChatSelect);
+    
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Also listen for chat creation events to immediately bind new chat
+  useEffect(() => {
+    const handleChatCreate = async (chatUuid: string) => {
+      console.log('🆕 ContextComposer: New chat created:', chatUuid)
+      setCurrentChatUuid(chatUuid)
+      // Proactively set the project by this chat UUID
+      await setCurrentProjectByChatUuid(chatUuid)
+    }
+    const unsubscribe = eventEmitter.on('chat:create', handleChatCreate)
+    return () => unsubscribe()
+  }, [setCurrentProjectByChatUuid])
+
+  // Load or create the project based on current chat selection
   useEffect(() => {
     const loadOrCreateProject = async () => {
       if (!isAuthenticated || !token) return;
 
-      setIsLoading(true);
-      setError(null);
-
       try {
-        // Try to get existing projects
-        const projectsResponse = await contextApi.getProjects();
+        // Load projects from store
+        await loadProjects();
         
-        if (projectsResponse.success && projectsResponse.data && projectsResponse.data.length > 0) {
-          // Use the first/most recent project
-          const project = projectsResponse.data[0];
-          setCurrentProject(project);
-          
-          // Convert backend context to legacy format for UI
-          if (project.context) {
-            const legacyContext = convertNewToLegacyContext(project.context);
-            setContext(legacyContext);
-          }
+        if (currentChatUuid) {
+          console.log('🔄 ContextComposer: Setting project for chat UUID:', currentChatUuid);
+          // Set current project based on chat UUID
+          await setCurrentProjectByChatUuid(currentChatUuid);
+        } else {
+          // When no chat UUID, avoid switching to an arbitrary prior project.
+          console.log('🔄 ContextComposer: No chat UUID yet, waiting for selection');
         }
       } catch (error) {
         setError("Failed to load project data");
-      } finally {
-        setIsLoading(false);
       }
     };
 
     loadOrCreateProject();
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, currentChatUuid, loadProjects, setError, setCurrentProjectByChatUuid]);
+
+  // Separate effect to load context when currentProject changes
+  useEffect(() => {
+    const loadProjectContext = async () => {
+      if (!currentProject) {
+        console.log('🔄 No current project, skipping context load');
+        return;
+      }
+
+      try {
+        console.log('🔄 Loading context for project:', currentProject.id, currentProject.name);
+        console.log('🔄 Full project object:', currentProject);
+        
+        // Convert backend context to legacy format for UI
+        if (currentProject.context) {
+          console.log('📄 Found context in project:', currentProject.context);
+          const legacyContext = convertNewToLegacyContext(currentProject.context);
+          console.log('🔄 Converted to legacy context:', legacyContext);
+          setContext(legacyContext);
+        } else {
+          console.log('📄 No context found in project, using default');
+          // Reset to default context if no context exists
+          setContext({
+            id: currentProject.id,
+            appDescription: "",
+            techStack: [],
+            userStories: "",
+            readme: "",
+            constraints: "",
+            lastUpdated: new Date()
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load project context:', error);
+        setError("Failed to load project context");
+      }
+    };
+
+    loadProjectContext();
+  }, [currentProject, setError]);
+
+  // Listen for view changes to refresh context when switching to context tab
+  useEffect(() => {
+    const handleViewChange = (event: CustomEvent<{ view: string }>) => {
+      if (event.detail.view === 'context' && currentProject) {
+        console.log('🔄 Context view activated');
+        // In chat-as-project model, each chat has exactly one project
+        if (currentChatUuid && currentProject.chat_uuid !== currentChatUuid) {
+          console.log('🔄 Chat-project mismatch, syncing to chat UUID:', currentChatUuid)
+          setCurrentProjectByChatUuid(currentChatUuid)
+            .then(() => refreshContext())
+        } else {
+          // Otherwise refresh context of current project
+          refreshContext();
+        }
+      }
+    };
+
+    window.addEventListener('view:change', handleViewChange as EventListener);
+    return () => {
+      window.removeEventListener('view:change', handleViewChange as EventListener);
+    };
+  }, [currentProject]);
+
+  // Also refresh context when component becomes visible (fallback)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && currentProject) {
+        console.log('🔄 Page became visible, refreshing context');
+        refreshContext();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentProject]);
 
   // Auto-detect tech stack from description and suggest/apply
   useEffect(() => {
@@ -129,6 +242,35 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
     }
   }, [context.appDescription]);
 
+  // Auto-save context when it changes (debounced)
+  useEffect(() => {
+    if (!currentProject || !context.appDescription) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const newContext = convertLegacyToNewContext(context);
+        const deriveName = (raw: string) => {
+          const base = (raw || '').split('\n')[0].trim();
+          if (!base) return 'New Project';
+          return base.length > 120 ? base.slice(0, 120) + '…' : base;
+        };
+
+        await updateProject(currentProject.id, {
+          context: newContext,
+          name: deriveName(context.appDescription),
+          description: context.appDescription?.trim() || "Auto-saved from Context Composer"
+        });
+
+        await updateProjectActivity(currentProject.id);
+        console.log('💾 Auto-saved context for project:', currentProject.id);
+      } catch (error) {
+        console.error('Failed to auto-save context:', error);
+      }
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [context, currentProject, updateProject, updateProjectActivity]);
+
   const applyRecommendedTech = () => {
     if (!detected) return;
     const canonical = detected.recommended;
@@ -139,20 +281,48 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
     ));
   };
 
+  // Function to refresh context from current project
+  const refreshContext = async () => {
+    if (!currentProject) {
+      console.log('🔄 No current project to refresh');
+      return;
+    }
+    
+    try {
+      console.log('🔄 Manually refreshing context for project:', currentProject.id);
+      
+      // Reload the project to get latest data
+      await loadProjects();
+      
+      // Get the updated project from store
+      const { projects } = useProjectStore.getState();
+      const updatedProject = projects.find(p => p.id === currentProject.id);
+      
+      if (updatedProject && updatedProject.context) {
+        console.log('📄 Found updated context:', updatedProject.context);
+        const legacyContext = convertNewToLegacyContext(updatedProject.context);
+        console.log('🔄 Setting refreshed context:', legacyContext);
+        setContext(legacyContext);
+      } else {
+        console.log('📄 No context found in updated project');
+      }
+    } catch (error) {
+      console.error('Failed to refresh context:', error);
+      setError("Failed to refresh context");
+    }
+  };
+
   const handleSave = async () => {
     if (!isAuthenticated || !token) {
       setError("Please log in to save your context");
       return;
     }
 
-    setIsLoading(true);
     setError(null);
 
     try {
       // Convert legacy context to new format
       const newContext = convertLegacyToNewContext(context);
-      
-      let response;
       
       // Derive a safe project name (UI may contain long description)
       const deriveName = (raw: string) => {
@@ -161,30 +331,58 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
         return base.length > 120 ? base.slice(0, 120) + '…' : base;
       };
 
+      // Use tracked chat UUID
+      const chatUuid = currentChatUuid;
+      
       if (currentProject) {
         // Update existing project
-        response = await contextApi.saveContext(currentProject.id, newContext);
-      } else {
+        const success = await updateProject(currentProject.id, {
+          context: newContext,
+          name: deriveName(context.appDescription),
+          description: context.appDescription?.trim() || "Updated from Context Composer"
+        });
+        
+        if (success) {
+          setIsSaved(true);
+          setTimeout(() => setIsSaved(false), 2000);
+        }
+      } else if (chatUuid) {
+        // Create new project from chat
         const projectName = deriveName(context.appDescription);
-        // Create new project
-        response = await contextApi.createProject({
+        const newProject = await createProjectFromChat(chatUuid, {
           name: projectName,
           description: context.appDescription?.trim() || "Created from Context Composer",
-          context: newContext
+          context: newContext,
+          status: 'draft',
+          generation_status: 'context_only'
         });
-      }
-
-      if (response.success && response.data) {
-        setCurrentProject(response.data);
-        setIsSaved(true);
-        setTimeout(() => setIsSaved(false), 2000);
+        
+        if (newProject) {
+          // Set the newly created project as current project
+          setCurrentProject(newProject);
+          setIsSaved(true);
+          setTimeout(() => setIsSaved(false), 2000);
+        }
       } else {
-        setError(response.errors?.join(", ") || "Failed to save context");
+        // Fallback: create project without chat UUID
+        const projectName = deriveName(context.appDescription);
+        const newProject = await createProject({
+          name: projectName,
+          description: context.appDescription?.trim() || "Created from Context Composer",
+          context: newContext,
+          status: 'draft',
+          generation_status: 'context_only',
+          chat_uuid: currentChatUuid || ''
+        });
+        
+        if (newProject) {
+          setCurrentProject(newProject);
+          setIsSaved(true);
+          setTimeout(() => setIsSaved(false), 2000);
+        }
       }
     } catch (error) {
       setError("Network error: Failed to save context");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -244,7 +442,7 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
   };
 
   const generateFromProject = () => {
-    setIsLoading(true);
+    // setIsLoading(true); // Remove this as setIsLoading doesn't exist
     try {
       // TODO: Implement auto-detection from current project files
       
@@ -260,10 +458,10 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
           ...prev,
           ...testContext
         }));
-        setIsLoading(false);
+        // setIsLoading(false); // Remove this as setIsLoading doesn't exist
       }, 2000);
     } catch (error) {
-      setIsLoading(false);
+      // setIsLoading(false); // Remove this as setIsLoading doesn't exist
     }
   };
 
@@ -272,7 +470,7 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-[#e4e4e4] dark:border-[#333] bg-white dark:bg-[#1a1a1c]">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-blue-500" />
+          <Code2 className="w-4 h-4 text-blue-500" />
           <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
             Context Composer
           </span>
@@ -287,14 +485,22 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
             )}
             title="Auto-generate from project"
           >
-            <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
+            <Loader2 className={cn("w-4 h-4", isLoading && "animate-spin")} />
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
             className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-[#2c2c2c] text-gray-600 dark:text-gray-400"
             title="Upload README"
           >
-            <Upload className="w-4 h-4" />
+            <FileText className="w-4 h-4" />
+          </button>
+          <button
+            onClick={refreshContext}
+            disabled={isLoading}
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-[#2c2c2c] text-blue-600 dark:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh context from project"
+          >
+            <Loader2 className="w-4 h-4" />
           </button>
           <button
             onClick={handleSave}
@@ -358,7 +564,7 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
         {/* Tech Stack */}
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            <Code className="w-4 h-4" />
+            <Code2 className="w-4 h-4" />
             Tech Stack
           </label>
           {detected && (
@@ -510,6 +716,13 @@ export function ContextComposer({ onFileSelect }: ContextComposerProps) {
             Last updated: {context.lastUpdated.toLocaleString()}
           </div>
         )}
+        
+        {/* Debug Info */}
+        <div className="text-xs text-gray-400 dark:text-gray-500 pt-2 border-t border-gray-200 dark:border-gray-600">
+          <div>Chat UUID: {currentChatUuid || 'None'}</div>
+          <div>Project ID: {currentProject?.id || 'None'}</div>
+          <div>Project Name: {currentProject?.name || 'None'}</div>
+        </div>
       </div>
 
       {/* Hidden file input */}

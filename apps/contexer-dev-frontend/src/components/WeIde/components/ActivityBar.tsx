@@ -28,9 +28,9 @@ const GithubIcon = () => (
 );
 
 interface ActivityBarProps {
-  activeView: "files" | "search" | "context" | "observer" | "fixer";
+  activeView: "files" | "search" | "context" | "fixer";
   showTerminal: boolean;
-  onViewChange: (view: "files" | "search" | "context" | "observer" | "fixer") => void;
+  onViewChange: (view: "files" | "search" | "context" | "fixer") => void;
   onToggleTerminal: () => void;
 }
 

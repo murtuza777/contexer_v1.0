@@ -79,10 +79,11 @@ export interface ProjectConstraints {
 
 export interface ProjectContext {
   goal: string;
-  user_stories: UserStory[];
+  user_stories: UserStory[] | string[];
   tech_stack: TechStack[];
-  constraints?: ProjectConstraints;
+  constraints?: ProjectConstraints | string;
   readme_content?: string;
+  readme?: string; // For wizard compatibility
   additional_notes?: string;
   project_type?: ProjectType;
   version?: string;
@@ -150,16 +151,24 @@ export function convertLegacyToNewContext(legacy: LegacyProjectContext): Project
 export function convertNewToLegacyContext(context: ProjectContext): LegacyProjectContext {
   // Convert structured user stories back to text format
   const userStoriesText = context.user_stories
-    ?.map(story => `- ${story.description}`)
+    ?.map(story => typeof story === 'string' ? story : `- ${story.description}`)
     .join('\n') || '';
+
+  // Handle constraints conversion
+  let constraintsText = '';
+  if (typeof context.constraints === 'string') {
+    constraintsText = context.constraints;
+  } else if (context.additional_notes) {
+    constraintsText = context.additional_notes;
+  }
 
   return {
     id: 'current',
     appDescription: context.goal || '',
     techStack: context.tech_stack || [],
     userStories: userStoriesText,
-    readme: context.readme_content || '',
-    constraints: context.additional_notes || '',
+    readme: context.readme_content || context.readme || '',
+    constraints: constraintsText,
     lastUpdated: new Date()
   };
 }

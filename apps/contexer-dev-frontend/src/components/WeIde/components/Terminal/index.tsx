@@ -11,6 +11,7 @@ import useChatModeStore from "@/stores/chatModeSlice";
 import useThemeStore from "@/stores/themeSlice";
 import useChatStore from "@/stores/chatSlice";
 import { useFileStore } from "../../stores/fileStore";
+import useObserverStore from "@/stores/observerSlice";
 
 // Custom Plus Icon
 const PlusIcon = () => (
@@ -225,6 +226,8 @@ export function Terminal() {
           padding: "4px 8px",
         }}
       >
+        {/* status area: progress + errors */}
+        <TerminalStatus />
         {items.map((item) => {
           if (!item.processId) return null;
           return (
@@ -256,4 +259,22 @@ export function Terminal() {
       ))}
     </div>
   );
+}
+
+function TerminalStatus() {
+  const progress = useObserverStore((s) => s.progress)
+  const errorCount = useObserverStore((s) => s.errors.length)
+  return (
+    <div className="flex items-center gap-3 mr-2">
+      <div className="w-32 h-1 bg-gray-700 rounded overflow-hidden">
+        <div
+          className="h-1 bg-neon-green transition-all"
+          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+        />
+      </div>
+      {errorCount > 0 && (
+        <span className="px-2 py-0.5 text-xs rounded bg-red-600 text-white">{errorCount} errors</span>
+      )}
+    </div>
+  )
 }

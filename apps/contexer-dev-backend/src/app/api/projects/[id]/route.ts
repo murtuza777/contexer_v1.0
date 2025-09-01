@@ -138,6 +138,19 @@ export async function PUT(
       updateData.status = status;
     }
 
+    // Handle new fields for state management
+    if (body.generation_status !== undefined) {
+      updateData.generation_status = body.generation_status;
+    }
+    
+    if (body.project_path !== undefined) {
+      updateData.project_path = body.project_path;
+    }
+    
+    if (body.chat_uuid !== undefined) {
+      updateData.chat_uuid = body.chat_uuid;
+    }
+
     // Update project
     const { data: updatedProject, error: updateError } = await supabase
       .from('projects')

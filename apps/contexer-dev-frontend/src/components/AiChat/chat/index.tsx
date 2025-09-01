@@ -23,6 +23,7 @@ import {checkExecList, checkFinish} from "../utils/checkFinish";
 import {useUrlData} from "@/hooks/useUrlData";
 import {MCPTool} from "@/types/mcp";
 import useMCPTools from "@/hooks/useMCPTools";
+import useProjectStore from "@/stores/projectSlice";
 
 type WeMessages = (Message & {
     experimental_attachments?: Array<{
@@ -109,19 +110,12 @@ export const BaseChat = ({uuid: propUuid}: { uuid?: string }) => {
         provider: "openai",
         functionCall: true,
     });
+    const fileStore = useFileStore();
     const {
         files,
         isFirstSend,
         isUpdateSend,
-        setIsFirstSend,
-        setIsUpdateSend,
-        setFiles,
-        setEmptyFiles,
-        errors,
-        updateContent,
-        clearErrors,
-        setOldFiles
-    } = useFileStore();
+    } = fileStore.getCurrentState();
     const {mode} = useChatModeStore();
     // Use global state
     const {
@@ -134,10 +128,10 @@ export const BaseChat = ({uuid: propUuid}: { uuid?: string }) => {
     const {resetTerminals} = useTerminalStore();
     const filesInitObj = {} as Record<string, string>;
     const filesUpdateObj = {} as Record<string, string>;
-    Object.keys(isFirstSend).forEach((key) => {
+    Object.keys(isFirstSend || {}).forEach((key) => {
         isFirstSend[key] && (filesInitObj[key] = files[key]);
     });
-    Object.keys(isUpdateSend).forEach((key) => {
+    Object.keys(isUpdateSend || {}).forEach((key) => {
         isUpdateSend[key] && (filesUpdateObj[key] = files[key]);
     });
 
@@ -232,6 +226,11 @@ export const BaseChat = ({uuid: propUuid}: { uuid?: string }) => {
 
     // Modify UUID initialization logic and message loading
     const [chatUuid, setChatUuid] = useState(() => propUuid || uuidv4());
+    
+    // Update file store current chat ID when chat UUID changes
+    useEffect(() => {
+        fileStore.setCurrentChat(chatUuid);
+    }, [chatUuid]);
 
     const refUuidMessages = useRef<string[]>([]);
 
@@ -274,20 +273,20 @@ export const BaseChat = ({uuid: propUuid}: { uuid?: string }) => {
                         });
                     }
                     setMessages(latestRecord.data.messages);
-                    setFiles(historyFiles);
-                    setOldFiles(oldHistoryFiles);
+                    fileStore.setFiles(historyFiles);
+                    fileStore.setOldFiles(oldHistoryFiles);
                     // Reset other states
                     clearImages();
-                    setIsFirstSend();
-                    setIsUpdateSend();
+                    fileStore.setIsFirstSend();
+                    fileStore.setIsUpdateSend();
                     resetTerminals();
                 }
             } else {
                 // If it's a new conversation, clear all states
                 setMessages([]);
                 clearImages();
-                setIsFirstSend();
-                setIsUpdateSend();
+                fileStore.setIsFirstSend();
+                fileStore.setIsUpdateSend();
             }
         } catch (error) {
             console.error("Failed to load chat history:", error);
@@ -295,38 +294,109 @@ export const BaseChat = ({uuid: propUuid}: { uuid?: string }) => {
         }
     };
 
-    // Listen for chat selection events
+    // Function to clear all context state for chat-as-project model
+    const clearAllContext = () => {
+        console.log('🧹 Clearing all context state for new chat-project');
+        setMessages([]);
+        setMessagesa([]);
+        fileStore.setFiles({});
+        fileStore.setOldFiles({});
+        clearImages();
+        fileStore.setIsFirstSend();
+        fileStore.setIsUpdateSend();
+        refUuidMessages.current = [];
+        resetTerminals();
+        if (ipcRenderer) {
+            fileStore.setEmptyFiles();
+            ipcRenderer.invoke("node-container:set-now-path", "");
+        }
+        // Clear current project - new chat will create its own project
+        const { setCurrentProject } = useProjectStore.getState();
+        setCurrentProject(null);
+    };
+
+    // Listen for context clear events
+    useEffect(() => {
+        const unsubscribe = eventEmitter.on('context:clear', () => {
+            clearAllContext();
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Listen for chat selection events - each chat has its own project
     useEffect(() => {
         const unsubscribe = eventEmitter.on("chat:select", (uuid: string) => {
             if (uuid !== chatUuid) {
+                console.log('🔄 Switching to chat:', uuid);
                 refUuidMessages.current = [];
                 setChatUuid(uuid || uuidv4());
                 if (uuid) {
-                    // Load history records
+                    // Load history for this specific chat-project
                     loadChatHistory(uuid);
                 } else {
                     // New conversation, clear all states
-                    setMessages([]);
-                    setFiles({});
-                    clearImages();
-                    setIsFirstSend();
-                    setIsUpdateSend();
-                    if (ipcRenderer) {
-                        setEmptyFiles();
-                        ipcRenderer.invoke("node-container:set-now-path", "");
-                        setFiles({});
-                        clearImages();
-                        setIsFirstSend();
-                        setIsUpdateSend();
-                        resetTerminals();
-                    }
+                    clearAllContext();
                 }
             }
         });
 
-        // Clean up subscription
         return () => unsubscribe();
     }, [chatUuid, files]);
+
+    // Listen for new chat creation events
+    useEffect(() => {
+        const unsubscribe = eventEmitter.on("chat:create", (uuid: string) => {
+            console.log('🆕 Creating new chat-project:', uuid);
+            // Clear all context first
+            clearAllContext();
+            // Set new chat UUID
+            setChatUuid(uuid);
+            // The useChatProjectSync hook will handle project creation
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    // Initialize chat from current project's chat UUID on mount or when project changes
+    useEffect(() => {
+        try {
+            const { getCurrentChatUuid } = useProjectStore.getState();
+            const existingChatUuid = getCurrentChatUuid?.() || null;
+            if (existingChatUuid) {
+                // Align local chat session with the project's chat
+                setChatUuid(existingChatUuid);
+                // Ensure other parts of the app sync to this chat
+                eventEmitter.emit('chat:select', existingChatUuid);
+                // Try loading history immediately for smoother UX
+                loadChatHistory(existingChatUuid);
+            }
+        } catch (e) {
+            // noop
+        }
+        // run once on mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Restore messages when state manager emits chat:restore (e.g., returning from Context)
+    useEffect(() => {
+        const unsubscribe = eventEmitter.on('chat:restore', (payload: { projectId: string; messages: WeMessages }) => {
+            if (payload && Array.isArray(payload.messages)) {
+                // Sync chat id to project id for consistency
+                if (payload.projectId && payload.projectId !== chatUuid) {
+                    setChatUuid(payload.projectId);
+                }
+                // Restore both the ai/react hook state and local render state
+                setMessages(payload.messages);
+                setMessagesa(payload.messages);
+                // Scroll to bottom after restore
+                setTimeout(() => {
+                    const container = document.querySelector('.message-container') as HTMLDivElement | null;
+                    if (container) container.scrollTop = container.scrollHeight;
+                }, 50);
+            }
+        });
+        return () => unsubscribe();
+    }, [chatUuid]);
     const token = useUserStore.getState().token;
     const {openModal} = useLimitModalStore();
 
@@ -449,12 +519,12 @@ export const BaseChat = ({uuid: propUuid}: { uuid?: string }) => {
                 if (message) {
                     const {files: messagefiles} = parseMessage(message.content);
                     for (let key in messagefiles) {
-                        await updateContent(key, messagefiles[key], false, true);
+                        await fileStore.updateContent(key, messagefiles[key], false, true);
                     }
                 }
 
-                setIsFirstSend();
-                setIsUpdateSend();
+                fileStore.setIsFirstSend();
+                fileStore.setIsUpdateSend();
 
                 let initMessage: Message[] = [];
                 initMessage = [
@@ -532,12 +602,13 @@ export const BaseChat = ({uuid: propUuid}: { uuid?: string }) => {
             parseMessages(needParseMessages);
             scrollToBottom();
         }
+        const { errors, clearErrors } = fileStore;
         if (errors.length > 0 && isLoading) {
             clearErrors();
         }
         if (!isLoading) {
             setMessagesa(realMessages as WeMessages);
-            createMpIcon(files);
+            createMpIcon(fileStore.getCurrentState().files);
         }
     }, [realMessages, isLoading]);
 
