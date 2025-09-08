@@ -54,10 +54,15 @@ export async function POST(
       }, { status: 500 });
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       project: updatedProject
     });
+    res.headers.set('Access-Control-Allow-Origin', '*');
+    res.headers.set('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.headers.set('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+    res.headers.set('Access-Control-Allow-Credentials', 'true');
+    return res;
 
   } catch (error) {
     console.error('Error in activity POST API:', error);
@@ -73,8 +78,9 @@ export async function OPTIONS() {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Methods': 'GET,OPTIONS,PATCH,DELETE,POST,PUT',
+      'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
     },
   });
 }
