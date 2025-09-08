@@ -135,6 +135,27 @@ const useProjectStore = create<ProjectState>()(
             throw new Error('No authentication token found')
           }
 
+          // Temporary backend health guard
+          try {
+            const controller = new AbortController()
+            const timeout = setTimeout(() => controller.abort(), 700)
+            const health = await fetch(`${baseUrl}/api/test`, { signal: controller.signal })
+            clearTimeout(timeout)
+            if (!health.ok) {
+              if (!(window as any).__PROJECT_GUARD_LOGGED__) {
+                console.warn('Backend not healthy, skipping updateProject temporarily')
+                ;(window as any).__PROJECT_GUARD_LOGGED__ = true
+              }
+              return false
+            }
+          } catch (_) {
+            if (!(window as any).__PROJECT_GUARD_LOGGED__) {
+              console.warn('Backend unreachable, skipping updateProject temporarily')
+              ;(window as any).__PROJECT_GUARD_LOGGED__ = true
+            }
+            return false
+          }
+
           console.log('🔄 Updating project:', id, 'with updates:', updates)
 
           const response = await fetch(`${baseUrl}/api/projects/${id}`, {
@@ -524,6 +545,27 @@ const useProjectStore = create<ProjectState>()(
             throw new Error('No authentication token found')
           }
 
+          // Temporary backend health guard
+          try {
+            const controller = new AbortController()
+            const timeout = setTimeout(() => controller.abort(), 700)
+            const health = await fetch(`${baseUrl}/api/test`, { signal: controller.signal })
+            clearTimeout(timeout)
+            if (!health.ok) {
+              if (!(window as any).__PROJECT_GUARD_LOGGED__) {
+                console.warn('Backend not healthy, skipping saveBuilderState temporarily')
+                ;(window as any).__PROJECT_GUARD_LOGGED__ = true
+              }
+              return
+            }
+          } catch (_) {
+            if (!(window as any).__PROJECT_GUARD_LOGGED__) {
+              console.warn('Backend unreachable, skipping saveBuilderState temporarily')
+              ;(window as any).__PROJECT_GUARD_LOGGED__ = true
+            }
+            return
+          }
+
           const response = await fetch(`${baseUrl}/api/projects/${projectId}/builder`, {
             method: 'POST',
             headers: {
@@ -596,7 +638,55 @@ const useProjectStore = create<ProjectState>()(
           const token = localStorage.getItem('token')
           
           if (!token) {
-            throw new Error('No authentication token found')
+            // No token available, just update local state
+            console.log('No authentication token found, updating local state only')
+            const { currentProject, projects } = get()
+            if (currentProject?.id === projectId) {
+              set({ 
+                currentProject: { 
+                  ...currentProject, 
+                  last_chat_activity: new Date().toISOString()
+                }
+              })
+            }
+            return
+          }
+
+          // Temporary backend health guard
+          try {
+            const controller = new AbortController()
+            const timeout = setTimeout(() => controller.abort(), 700)
+            const health = await fetch(`${baseUrl}/api/test`, { signal: controller.signal })
+            clearTimeout(timeout)
+            if (!health.ok) {
+              if (!(window as any).__PROJECT_GUARD_LOGGED__) {
+                console.warn('Backend not healthy, skipping updateProjectActivity temporarily')
+                ;(window as any).__PROJECT_GUARD_LOGGED__ = true
+              }
+              // proceed to update local state below regardless
+            }
+          } catch (_) {
+            if (!(window as any).__PROJECT_GUARD_LOGGED__) {
+              console.warn('Backend unreachable, skipping updateProjectActivity temporarily')
+              ;(window as any).__PROJECT_GUARD_LOGGED__ = true
+            }
+            // proceed to update local state below regardless
+            const { currentProject, projects } = get()
+            if (currentProject?.id === projectId) {
+              set({ 
+                currentProject: { 
+                  ...currentProject, 
+                  last_chat_activity: new Date().toISOString()
+                }
+              })
+            }
+            const updatedProjects = projects.map(p => 
+              p.id === projectId 
+                ? { ...p, last_chat_activity: new Date().toISOString() }
+                : p
+            )
+            set({ projects: updatedProjects })
+            return
           }
 
           const response = await fetch(`${baseUrl}/api/projects/${projectId}/activity`, {
@@ -611,10 +701,11 @@ const useProjectStore = create<ProjectState>()(
           })
 
           if (!response.ok) {
-            throw new Error(`Failed to update project activity: ${response.statusText}`)
+            console.warn(`Failed to update project activity: ${response.statusText}`)
+            // Don't throw error, just update local state
           }
 
-          // Update local state
+          // Update local state regardless of API response
           const { currentProject, projects } = get()
           if (currentProject?.id === projectId) {
             set({ 
