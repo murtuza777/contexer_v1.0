@@ -14,12 +14,14 @@ import { useProjectInit } from "../../hooks/useProjectInit"
 import { useChatProjectSync } from "../../hooks/useChatProjectSync"
 import { useSeamlessStateManagement } from "../../hooks/useSeamlessStateManagement"
 import { useChatStatePersistence } from "../../hooks/useChatStatePersistence"
+import useProjectStore from "../../stores/projectSlice"
 
 export default function WeIde() {
   const [activeTab, setActiveTab] = useState("");
   const [showTerminal, setShowTerminal] = useState(true);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const { setDirty } = useEditorStore();
+  const { currentProject } = useProjectStore();
   const [activeView, setActiveView] = useState<"files" | "search" | "context" | "fixer">("files");
   
   // Handle view changes and emit events

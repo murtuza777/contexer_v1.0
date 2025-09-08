@@ -27,6 +27,7 @@ const GithubIcon = () => (
   </svg>
 );
 
+
 interface ActivityBarProps {
   activeView: "files" | "search" | "context" | "fixer";
   showTerminal: boolean;
@@ -80,6 +81,7 @@ export function ActivityBar({
           <SearchIcon />
         </button>
       </Tooltip>
+
 
       {/* Top-level nav now controls these features; hide duplicates in activity bar */}
 

@@ -43,7 +43,16 @@ const CORS_HEADERS = {
 export function middleware(request: NextRequest) {
   // Skip i18n middleware for API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    // Add CORS headers for API routes
+    // If this is a CORS preflight, respond immediately with OK + CORS headers
+    if (request.method === 'OPTIONS') {
+      const preflight = new NextResponse(null, { status: 200 });
+      Object.entries(CORS_HEADERS).forEach(([key, value]) => {
+        preflight.headers.set(key, value);
+      });
+      return preflight;
+    }
+
+    // Otherwise, continue and attach CORS headers
     const response = NextResponse.next();
     Object.entries(CORS_HEADERS).forEach(([key, value]) => {
       response.headers.set(key, value);

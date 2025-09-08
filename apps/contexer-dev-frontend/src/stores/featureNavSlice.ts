@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type TopFeature = 'chat' | 'context' | 'fixer';
+export type TopFeature = 'chat' | 'context' | 'fixer' | 'visual';
 
 type FeatureNavState = {
   active: TopFeature;

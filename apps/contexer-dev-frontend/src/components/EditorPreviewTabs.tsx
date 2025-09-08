@@ -5,6 +5,30 @@ import WeIde from "./WeIde";
 import useTerminalStore from "@/stores/terminalSlice";
 import WeAPI from "./WeAPI";
 import { useTranslation } from "react-i18next";
+import { ContextComposer } from "./WeIde/components/IDEContent/ContextComposer";
+import { ErrorFixer } from "./WeIde/components/IDEContent/ErrorFixer";
+import { VisualObserver } from "./WeIde/components/VisualObserver";
+import { useFeatureNav } from "@/stores/featureNavSlice";
+
+// Feature Icons
+const ContextIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
+
+const FixerIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+  </svg>
+);
+
+const VisualIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+);
 
 const ipcRenderer = window?.electron?.ipcRenderer;
 
@@ -76,13 +100,16 @@ export async function findWeChatDevToolsPath() {
   }
 }
 const EditorPreviewTabs: React.FC = () => {
-  const { getFiles, projectRoot,oldFiles,files } = useFileStore();
+  const { getFiles } = useFileStore();
   const [showIframe, setShowIframe] = useState<string>("editor");
   const [frameStyleMap, setFrameStyleMap] = useState<Record<string, string>>({
     editor: "translate-x-0 opacity-100",
     weApi: "translate-x-full opacity-100",
     preview: "translate-x-full opacity-100",
-    diff: "translate-x-full opacity-100"
+    diff: "translate-x-full opacity-100",
+    context: "translate-x-full opacity-100",
+    fixer: "translate-x-full opacity-100",
+    visual: "translate-x-full opacity-100"
   });
   const { t } = useTranslation();
 
@@ -100,7 +127,7 @@ const EditorPreviewTabs: React.FC = () => {
         const defaultRoot = await ipcRenderer?.invoke(
           "node-container:get-project-root"
         );
-        const command = `"${cliPath}" -o "${projectRoot || defaultRoot}" --auto-port`;
+        const command = `"${cliPath}" -o "${defaultRoot}" --auto-port`;
         await ipcRenderer?.invoke("node-container:exec-command", command);
       }
     } catch (error) {
@@ -156,6 +183,32 @@ const EditorPreviewTabs: React.FC = () => {
             label={t("editor.apiTest")}
           />
           
+          {/* Feature Tabs */}
+          <TabButton
+            active={showIframe == "context"}
+            onClick={() => {
+              onToggle("context");
+            }}
+            icon={<ContextIcon />}
+            label="Context"
+          />
+          <TabButton
+            active={showIframe == "fixer"}
+            onClick={() => {
+              onToggle("fixer");
+            }}
+            icon={<FixerIcon />}
+            label="Error Fixer"
+          />
+          <TabButton
+            active={showIframe == "visual"}
+            onClick={() => {
+              onToggle("visual");
+            }}
+            icon={<VisualIcon />}
+            label="Visual Observer"
+          />
+          
         </div>
 
         {/* <div className="flex items-center gap-2 mr-2">
@@ -196,6 +249,35 @@ const EditorPreviewTabs: React.FC = () => {
         `}
         >
           <WeAPI />
+        </div>
+        
+        {/* Feature Content Areas */}
+        <div
+          className={`
+          absolute inset-0
+          transform transition-all duration-500 ease-in-out
+          ${frameStyleMap["context"]}
+        `}
+        >
+          <ContextComposer />
+        </div>
+        <div
+          className={`
+          absolute inset-0
+          transform transition-all duration-500 ease-in-out
+          ${frameStyleMap["fixer"]}
+        `}
+        >
+          <ErrorFixer />
+        </div>
+        <div
+          className={`
+          absolute inset-0
+          transform transition-all duration-500 ease-in-out
+          ${frameStyleMap["visual"]}
+        `}
+        >
+          <VisualObserver />
         </div>
          {/* <div
           className={`
